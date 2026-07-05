@@ -521,7 +521,7 @@ export default function Intervalo() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#fff', height: '100vh', display: 'flex', flexDirection: 'column',
+        background: '#fff', height: '100dvh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', padding: '24px', gap: '16px', textAlign: 'center',
       }}>
         <span style={{ fontSize: '14px', fontWeight: '600', color: '#EF4444' }}>{erro}</span>
@@ -540,7 +540,7 @@ export default function Intervalo() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#fff', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#fff', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <span style={{ fontSize: '13px', fontWeight: '500', color: '#9CA3AF' }}>Carregando...</span>
       </div>
@@ -553,7 +553,7 @@ export default function Intervalo() {
       style={{
         maxWidth: '480px', margin: '0 auto',
         fontFamily: "'Inter', sans-serif",
-        background: '#FFFFFF', height: '100vh',
+        background: '#FFFFFF', height: '100dvh',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}
     >

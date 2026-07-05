@@ -153,7 +153,7 @@ export default function BuscaApostada() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#F5F5F5', height: '100vh', display: 'flex',
+        background: '#F5F5F5', height: '100dvh', display: 'flex',
         alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{
@@ -170,7 +170,7 @@ export default function BuscaApostada() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#F5F5F5', height: '100vh', display: 'flex', flexDirection: 'column',
+        background: '#F5F5F5', height: '100dvh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', padding: '24px', boxSizing: 'border-box',
       }}>
         <div style={{ fontSize: '14px', fontWeight: '500', color: '#EF4444', marginBottom: '20px', textAlign: 'center' }}>
@@ -199,7 +199,7 @@ export default function BuscaApostada() {
         margin: '0 auto',
         fontFamily: "'Inter', sans-serif",
         background: '#F5F5F5',
-        height: '100vh',
+        height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -281,7 +281,7 @@ export default function BuscaApostada() {
       margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
       background: '#F5F5F5',
-      height: '100vh',
+      height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',

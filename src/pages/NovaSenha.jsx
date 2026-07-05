@@ -89,7 +89,7 @@ export default function NovaSenha() {
     <div style={{
       maxWidth: '480px', margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
-      background: '#FFFFFF', height: '100vh',
+      background: '#FFFFFF', height: '100dvh',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
 

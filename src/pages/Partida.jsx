@@ -503,7 +503,7 @@ export default function Partida() {
 
   if (erro && carregando) {
     return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', gap: '16px', textAlign: 'center' }}>
+      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', gap: '16px', textAlign: 'center' }}>
         <span style={{ fontSize: '14px', fontWeight: '600', color: '#EF4444' }}>{erro}</span>
         <button onClick={() => navigate('/jogar')} style={{ background: '#F97316', color: '#fff', border: 'none', borderRadius: '12px', padding: '13px 32px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
           VOLTAR
@@ -514,7 +514,7 @@ export default function Partida() {
 
   if (carregando) {
     return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ fontSize: '13px', fontWeight: '500', color: '#9CA3AF' }}>Carregando partida...</span>
       </div>
     )
@@ -525,7 +525,7 @@ export default function Partida() {
       <div style={{
         maxWidth: '480px', margin: '0 auto',
         fontFamily: "'Inter', sans-serif",
-        background: '#1C1C1C', height: '100vh',
+        background: '#1C1C1C', height: '100dvh',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         gap: '24px', padding: '24px',
       }}>
@@ -561,7 +561,7 @@ export default function Partida() {
     <div style={{
       maxWidth: '480px', margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
-      background: '#FFFFFF', height: '100vh',
+      background: '#FFFFFF', height: '100dvh',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
       position: 'relative',
     }}>

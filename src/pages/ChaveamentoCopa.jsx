@@ -164,7 +164,7 @@ export default function ChaveamentoCopa() {
       margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
       background: '#F5F5F5',
-      height: '100vh',
+      height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',

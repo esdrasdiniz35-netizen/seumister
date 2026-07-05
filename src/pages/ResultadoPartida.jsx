@@ -309,7 +309,7 @@ export default function ResultadoPartida() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#FFFFFF', height: '100vh',
+        background: '#FFFFFF', height: '100dvh',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <span style={{ fontSize: '13px', fontWeight: '600', color: '#6B7280' }}>Carregando resultado...</span>
@@ -321,7 +321,7 @@ export default function ResultadoPartida() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#FFFFFF', height: '100vh',
+        background: '#FFFFFF', height: '100dvh',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: '24px', gap: '16px', boxSizing: 'border-box', textAlign: 'center',
       }}>
@@ -349,7 +349,7 @@ export default function ResultadoPartida() {
     <div style={{
       maxWidth: '480px', margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
-      background: '#FFFFFF', height: '100vh',
+      background: '#FFFFFF', height: '100dvh',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
 

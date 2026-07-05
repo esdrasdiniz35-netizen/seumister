@@ -194,7 +194,7 @@ export default function PrePartida() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#F5F5F5', height: '100vh', display: 'flex', flexDirection: 'column',
+        background: '#F5F5F5', height: '100dvh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', padding: '24px', boxSizing: 'border-box',
         textAlign: 'center', gap: '16px',
       }}>
@@ -217,7 +217,7 @@ export default function PrePartida() {
     return (
       <div style={{
         maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif",
-        background: '#F5F5F5', height: '100vh', display: 'flex', flexDirection: 'column',
+        background: '#F5F5F5', height: '100dvh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', padding: '24px', boxSizing: 'border-box',
       }}>
         <span style={{ fontSize: '13px', fontWeight: '500', color: '#9CA3AF' }}>
@@ -233,7 +233,7 @@ export default function PrePartida() {
       margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
       background: '#F5F5F5',
-      height: '100vh',
+      height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',

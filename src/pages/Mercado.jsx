@@ -351,7 +351,7 @@ export default function Mercado() {
 
   if (carregandoClube) {
     return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ fontSize: '13px', fontWeight: '500', color: '#9CA3AF' }}>Carregando mercado...</span>
       </div>
     )
@@ -361,7 +361,7 @@ export default function Mercado() {
     <div style={{
       maxWidth: '480px', margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
-      background: '#FFFFFF', height: '100vh',
+      background: '#FFFFFF', height: '100dvh',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
 
