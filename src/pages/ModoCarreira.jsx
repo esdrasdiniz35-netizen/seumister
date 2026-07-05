@@ -3,6 +3,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 
+import iconPlanejamento from '../assets/icons/planejamento.png'
+import iconAlvo from '../assets/icons/alvo.png'
+import iconCoin from '../assets/icons/icon-coin.png'
+import iconSubstituicao from '../assets/icons/subistituicao.png'
+
 // ─── ÍCONES SVG INLINE ───────────────────────────────────────────────────────
 
 const IconVoltar = () => (
@@ -33,31 +38,11 @@ const IconMoeda = () => (
   </svg>
 )
 
-const IconTorneio = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <rect x="9" y="2" width="6" height="4" rx="1" stroke="#F97316" strokeWidth="2"/>
-    <rect x="2" y="10" width="6" height="4" rx="1" stroke="#9CA3AF" strokeWidth="2"/>
-    <rect x="16" y="10" width="6" height="4" rx="1" stroke="#9CA3AF" strokeWidth="2"/>
-    <rect x="9" y="18" width="6" height="4" rx="1" stroke="#6B7280" strokeWidth="2"/>
-    <path d="M12 6v4M5 10V8M19 10V8M12 18v-4M5 14v4h7M19 14v4h-7" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
-  </svg>
-)
-
 const IconAviso = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 )
-
-const NOME_FASE = {
-  grupos:   'Fase de Grupos',
-  oitavas:  'Oitavas de Final',
-  quartas:  'Quartas de Final',
-  semi:     'Semifinal',
-  final:    'Final',
-  campeao:  'Campeão 🏆',
-  eliminado: 'Eliminado',
-}
 
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 
@@ -68,7 +53,6 @@ export default function ModoCarreira() {
   const [entrando, setEntrando]                     = useState(null)  // 'normal' | 'avancado' | null
   const [erro, setErro]                             = useState(null)
   const [confirmandoAvancado, setConfirmandoAvancado] = useState(false)
-  const [torneioAtivo, setTorneioAtivo]             = useState(null)
 
   // ─── AO MONTAR: checa torneio ativo e redireciona se houver ─────────────
   useEffect(() => {
@@ -76,7 +60,6 @@ export default function ModoCarreira() {
       try {
         const dados = await apiFetch('/api/competicao/atual')
         if (dados.competicao) {
-          // Já tem torneio ativo — vai direto pra tela de acompanhamento
           navigate('/torneio-carreira', { replace: true })
           return
         }
@@ -105,7 +88,6 @@ export default function ModoCarreira() {
         method: 'POST',
         body: { modo },
       })
-      // Sucesso → vai pra tela de acompanhamento
       navigate('/torneio-carreira')
     } catch (e) {
       setErro(e.message || 'Não foi possível entrar no torneio. Tente novamente.')
@@ -160,7 +142,7 @@ export default function ModoCarreira() {
       </div>
 
       {/* ── CONTEÚDO PRINCIPAL ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
         {/* VERIFICANDO */}
         {verificando && (
@@ -191,10 +173,10 @@ export default function ModoCarreira() {
               background: '#fff', borderRadius: '14px',
               border: '1.5px solid #E5E7EB', overflow: 'hidden',
             }}>
-              <div style={{ padding: '14px 14px 12px', borderBottom: '1px solid #F5F5F5' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div style={{ padding: '12px 12px 10px', borderBottom: '1px solid #F5F5F5' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                   <div style={{
-                    width: '40px', height: '40px', borderRadius: '12px',
+                    width: '36px', height: '36px', borderRadius: '10px',
                     background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}>
@@ -210,7 +192,7 @@ export default function ModoCarreira() {
                   </div>
                 </div>
 
-                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 10px', lineHeight: '1.6' }}>
+                <p style={{ fontSize: '11.5px', color: '#6B7280', margin: '0 0 8px', lineHeight: '1.5' }}>
                   8 grupos de 4 times. Os 2 melhores de cada grupo avançam para o mata-mata — ida e volta até a final.
                 </p>
 
@@ -237,7 +219,7 @@ export default function ModoCarreira() {
               </div>
 
               <div style={{
-                padding: '12px 14px',
+                padding: '10px 12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -251,7 +233,7 @@ export default function ModoCarreira() {
                   style={{
                     background: entrando === 'normal' ? '#D1D5DB' : '#10B981',
                     color: '#fff', border: 'none', borderRadius: '10px',
-                    padding: '9px 18px', fontSize: '13px', fontWeight: '700',
+                    padding: '8px 16px', fontSize: '13px', fontWeight: '700',
                     cursor: entrando ? 'default' : 'pointer',
                     transition: 'background 0.15s',
                   }}
@@ -268,10 +250,9 @@ export default function ModoCarreira() {
               overflow: 'hidden',
               transition: 'border-color 0.2s',
             }}>
-              {/* Badge topo */}
               <div style={{
                 background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)',
-                padding: '6px 14px',
+                padding: '5px 12px',
                 display: 'flex', alignItems: 'center', gap: '6px',
               }}>
                 <IconEstrela />
@@ -280,10 +261,10 @@ export default function ModoCarreira() {
                 </span>
               </div>
 
-              <div style={{ padding: '14px 14px 12px', borderBottom: '1px solid #F5F5F5' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div style={{ padding: '12px 12px 10px', borderBottom: '1px solid #F5F5F5' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                   <div style={{
-                    width: '40px', height: '40px', borderRadius: '12px',
+                    width: '36px', height: '36px', borderRadius: '10px',
                     background: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}>
@@ -299,7 +280,7 @@ export default function ModoCarreira() {
                   </div>
                 </div>
 
-                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 10px', lineHeight: '1.6' }}>
+                <p style={{ fontSize: '11.5px', color: '#6B7280', margin: '0 0 8px', lineHeight: '1.5' }}>
                   Real Madrid, Barcelona, City, PSG, Bayern — mais os grandes do Brasil e da Europa. Mesmo formato, adversários muito mais fortes.
                 </p>
 
@@ -325,26 +306,25 @@ export default function ModoCarreira() {
                 </div>
               </div>
 
-              {/* Aviso provocativo */}
               {confirmandoAvancado && (
                 <div style={{
-                  margin: '12px 14px 0',
+                  margin: '10px 12px 0',
                   background: '#FFFBEB', borderRadius: '10px',
                   border: '1px solid #FDE68A',
-                  padding: '10px 12px',
+                  padding: '9px 11px',
                   display: 'flex', gap: '8px', alignItems: 'flex-start',
                 }}>
                   <div style={{ flexShrink: 0, marginTop: '1px' }}>
                     <IconAviso />
                   </div>
-                  <p style={{ fontSize: '12px', color: '#92400E', margin: 0, lineHeight: '1.6' }}>
+                  <p style={{ fontSize: '11.5px', color: '#92400E', margin: 0, lineHeight: '1.5' }}>
                     <strong>Aqui jogam os melhores.</strong> Sem um elenco forte, você vai passar vergonha na frente de todo mundo. Tem certeza que quer entrar?
                   </p>
                 </div>
               )}
 
               <div style={{
-                padding: '12px 14px',
+                padding: '10px 12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
@@ -360,7 +340,7 @@ export default function ModoCarreira() {
                       style={{
                         background: '#F5F5F5', color: '#6B7280',
                         border: 'none', borderRadius: '10px',
-                        padding: '9px 14px', fontSize: '12px', fontWeight: '600',
+                        padding: '8px 12px', fontSize: '12px', fontWeight: '600',
                         cursor: 'pointer',
                       }}
                     >
@@ -377,7 +357,7 @@ export default function ModoCarreira() {
                           ? '#F97316'
                           : '#10B981',
                       color: '#fff', border: 'none', borderRadius: '10px',
-                      padding: '9px 18px', fontSize: '13px', fontWeight: '700',
+                      padding: '8px 16px', fontSize: '13px', fontWeight: '700',
                       cursor: entrando ? 'default' : 'pointer',
                       transition: 'background 0.15s',
                     }}
@@ -395,25 +375,25 @@ export default function ModoCarreira() {
             {/* ── COMO FUNCIONA ──────────────────────────────────────────────── */}
             <div style={{
               background: '#fff', borderRadius: '14px',
-              border: '1.5px solid #E5E7EB', padding: '14px',
+              border: '1.5px solid #E5E7EB', padding: '12px',
             }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#1C1C1C', marginBottom: '10px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#1C1C1C', marginBottom: '8px' }}>
                 Como funciona
               </div>
               {[
-                ['📋', 'Fase de grupos', '8 grupos de 4 times. Os 2 primeiros de cada grupo avançam.'],
-                ['⚔️', 'Mata-mata', 'Oitavas, quartas, semi e final — tudo em ida e volta. Empate no agregado vai para pênaltis.'],
-                ['💰', 'Recompensas', 'Você ganha moedas em cada partida, ganhe ou perca. Quem vencer a final leva o prêmio extra.'],
-                ['🔄', 'Re-entrada livre', 'Pode entrar em quantos torneios quiser no mês. Só não dá para ter dois ativos ao mesmo tempo.'],
-              ].map(([emoji, titulo, desc]) => (
+                [iconPlanejamento, 'Fase de grupos', '8 grupos de 4 times. Os 2 primeiros de cada grupo avançam.'],
+                [iconAlvo, 'Mata-mata', 'Oitavas, quartas, semi e final — tudo em ida e volta. Empate no agregado vai para pênaltis.'],
+                [iconCoin, 'Recompensas', 'Você ganha moedas em cada partida, ganhe ou perca. Quem vencer a final leva o prêmio extra.'],
+                [iconSubstituicao, 'Re-entrada livre', 'Pode entrar em quantos torneios quiser no mês. Só não dá para ter dois ativos ao mesmo tempo.'],
+              ].map(([icone, titulo, desc]) => (
                 <div key={titulo} style={{
-                  display: 'flex', gap: '10px', alignItems: 'flex-start',
-                  marginBottom: '10px',
+                  display: 'flex', gap: '9px', alignItems: 'flex-start',
+                  marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>{emoji}</span>
+                  <img src={icone} alt="" style={{ width: '16px', height: '16px', flexShrink: 0, marginTop: '1px', objectFit: 'contain' }} />
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#1C1C1C' }}>{titulo}</div>
-                    <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: '1.5', marginTop: '2px' }}>{desc}</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: '700', color: '#1C1C1C' }}>{titulo}</div>
+                    <div style={{ fontSize: '10.5px', color: '#6B7280', lineHeight: '1.4', marginTop: '2px' }}>{desc}</div>
                   </div>
                 </div>
               ))}
