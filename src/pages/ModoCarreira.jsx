@@ -5,7 +5,7 @@ import { apiFetch } from '../lib/api'
 
 import iconPlanejamento from '../assets/icons/planejamento.png'
 import iconAlvo from '../assets/icons/alvo.png'
-import iconCoin from '../assets/icons/icon-coin.png'
+import iconSacoMoedas from '../assets/icons/sacodemoedas.png'
 import iconSubstituicao from '../assets/icons/subistituicao.png'
 
 // ─── ÍCONES SVG INLINE ───────────────────────────────────────────────────────
@@ -142,13 +142,13 @@ export default function ModoCarreira() {
       </div>
 
       {/* ── CONTEÚDO PRINCIPAL ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
         {/* VERIFICANDO */}
         {verificando && (
           <div style={{
             background: '#fff', borderRadius: '14px', padding: '32px 16px',
-            textAlign: 'center', border: '1.5px solid #E5E7EB',
+            textAlign: 'center', border: '1.5px solid #E5E7EB', flexShrink: 0,
           }}>
             <div style={{ fontSize: '13px', color: '#6B7280' }}>Verificando torneios...</div>
           </div>
@@ -158,7 +158,7 @@ export default function ModoCarreira() {
         {erro && (
           <div style={{
             background: '#FEF2F2', border: '1.5px solid #FECACA',
-            borderRadius: '10px', padding: '10px 12px',
+            borderRadius: '10px', padding: '10px 12px', flexShrink: 0,
           }}>
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#EF4444' }}>{erro}</span>
           </div>
@@ -168,12 +168,13 @@ export default function ModoCarreira() {
         {!verificando && (
           <>
 
-            {/* ── CARD NORMAL ──────────────────────────────────────────────── */}
-            <div style={{
-              background: '#fff', borderRadius: '14px',
-              border: '1.5px solid #E5E7EB', overflow: 'hidden',
-            }}>
-              <div style={{ padding: '12px 12px 10px', borderBottom: '1px solid #F5F5F5' }}>
+            {/* ── CARD NORMAL — corpo + rodapé encostado, cada um com flexShrink:0 ── */}
+            <div style={{ flexShrink: 0 }}>
+              <div style={{
+                background: '#fff', borderRadius: '14px 14px 0 0',
+                border: '1.5px solid #E5E7EB', borderBottom: 'none',
+                padding: '12px 12px 10px',
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                   <div style={{
                     width: '36px', height: '36px', borderRadius: '10px',
@@ -218,7 +219,10 @@ export default function ModoCarreira() {
                 </div>
               </div>
 
+              {/* Rodapé — visualmente encostado no card, mas fora do overflow:hidden dele */}
               <div style={{
+                background: '#fff', borderRadius: '0 0 14px 14px',
+                border: '1.5px solid #E5E7EB', borderTop: '1px solid #F5F5F5',
                 padding: '10px 12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
@@ -243,87 +247,94 @@ export default function ModoCarreira() {
               </div>
             </div>
 
-            {/* ── CARD AVANÇADO ─────────────────────────────────────────────── */}
-            <div style={{
-              background: '#fff', borderRadius: '14px',
-              border: confirmandoAvancado ? '2px solid #F97316' : '1.5px solid #E5E7EB',
-              overflow: 'hidden',
-              transition: 'border-color 0.2s',
-            }}>
+            {/* ── CARD AVANÇADO — mesma estrutura de corpo + rodapé encostado ── */}
+            <div style={{ flexShrink: 0 }}>
               <div style={{
-                background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)',
-                padding: '5px 12px',
-                display: 'flex', alignItems: 'center', gap: '6px',
+                borderRadius: '14px 14px 0 0',
+                border: confirmandoAvancado ? '2px solid #F97316' : '1.5px solid #E5E7EB',
+                borderBottom: 'none',
+                overflow: 'hidden',
+                transition: 'border-color 0.2s',
               }}>
-                <IconEstrela />
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#fff', letterSpacing: '0.5px' }}>
-                  LIGA DOS MELHORES
-                </span>
-              </div>
-
-              <div style={{ padding: '12px 12px 10px', borderBottom: '1px solid #F5F5F5' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '10px',
-                    background: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <IconTrofeu cor="#F97316" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '16px', fontWeight: '900', color: '#1C1C1C', lineHeight: 1 }}>
-                      Avançado
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '3px' }}>
-                      Os gigantes do futebol mundial
-                    </div>
-                  </div>
-                </div>
-
-                <p style={{ fontSize: '11.5px', color: '#6B7280', margin: '0 0 8px', lineHeight: '1.5' }}>
-                  Real Madrid, Barcelona, City, PSG, Bayern — mais os grandes do Brasil e da Europa. Mesmo formato, adversários muito mais fortes.
-                </p>
-
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <span style={{
-                    fontSize: '11px', fontWeight: '600', color: '#F97316',
-                    background: '#FFF7ED', padding: '3px 8px', borderRadius: '99px',
-                  }}>
-                    32 times de elite
-                  </span>
-                  <span style={{
-                    fontSize: '11px', fontWeight: '600', color: '#F97316',
-                    background: '#FFF7ED', padding: '3px 8px', borderRadius: '99px',
-                  }}>
-                    Bônus de porte ativo
-                  </span>
-                  <span style={{
-                    fontSize: '11px', fontWeight: '700', color: '#10B981',
-                    background: '#ECFDF5', padding: '3px 8px', borderRadius: '99px',
-                  }}>
-                    🏆 +200 moedas ao campeão
-                  </span>
-                </div>
-              </div>
-
-              {confirmandoAvancado && (
                 <div style={{
-                  margin: '10px 12px 0',
-                  background: '#FFFBEB', borderRadius: '10px',
-                  border: '1px solid #FDE68A',
-                  padding: '9px 11px',
-                  display: 'flex', gap: '8px', alignItems: 'flex-start',
+                  background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)',
+                  padding: '5px 12px',
+                  display: 'flex', alignItems: 'center', gap: '6px',
                 }}>
-                  <div style={{ flexShrink: 0, marginTop: '1px' }}>
-                    <IconAviso />
-                  </div>
-                  <p style={{ fontSize: '11.5px', color: '#92400E', margin: 0, lineHeight: '1.5' }}>
-                    <strong>Aqui jogam os melhores.</strong> Sem um elenco forte, você vai passar vergonha na frente de todo mundo. Tem certeza que quer entrar?
-                  </p>
+                  <IconEstrela />
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#fff', letterSpacing: '0.5px' }}>
+                    LIGA DOS MELHORES
+                  </span>
                 </div>
-              )}
 
+                <div style={{ background: '#fff', padding: '12px 12px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <IconTrofeu cor="#F97316" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '16px', fontWeight: '900', color: '#1C1C1C', lineHeight: 1 }}>
+                        Avançado
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '3px' }}>
+                        Os gigantes do futebol mundial
+                      </div>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '11.5px', color: '#6B7280', margin: '0 0 8px', lineHeight: '1.5' }}>
+                    Real Madrid, Barcelona, City, PSG, Bayern — mais os grandes do Brasil e da Europa. Mesmo formato, adversários muito mais fortes.
+                  </p>
+
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '11px', fontWeight: '600', color: '#F97316',
+                      background: '#FFF7ED', padding: '3px 8px', borderRadius: '99px',
+                    }}>
+                      32 times de elite
+                    </span>
+                    <span style={{
+                      fontSize: '11px', fontWeight: '600', color: '#F97316',
+                      background: '#FFF7ED', padding: '3px 8px', borderRadius: '99px',
+                    }}>
+                      Bônus de porte ativo
+                    </span>
+                    <span style={{
+                      fontSize: '11px', fontWeight: '700', color: '#10B981',
+                      background: '#ECFDF5', padding: '3px 8px', borderRadius: '99px',
+                    }}>
+                      🏆 +200 moedas ao campeão
+                    </span>
+                  </div>
+                </div>
+
+                {confirmandoAvancado && (
+                  <div style={{
+                    margin: '0 12px 10px',
+                    background: '#FFFBEB', borderRadius: '10px',
+                    border: '1px solid #FDE68A',
+                    padding: '9px 11px',
+                    display: 'flex', gap: '8px', alignItems: 'flex-start',
+                  }}>
+                    <div style={{ flexShrink: 0, marginTop: '1px' }}>
+                      <IconAviso />
+                    </div>
+                    <p style={{ fontSize: '11.5px', color: '#92400E', margin: 0, lineHeight: '1.5' }}>
+                      <strong>Aqui jogam os melhores.</strong> Sem um elenco forte, você vai passar vergonha na frente de todo mundo. Tem certeza que quer entrar?
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Rodapé — encostado no card, fora do overflow:hidden */}
               <div style={{
+                background: '#fff', borderRadius: '0 0 14px 14px',
+                border: confirmandoAvancado ? '2px solid #F97316' : '1.5px solid #E5E7EB',
+                borderTop: '1px solid #F5F5F5',
                 padding: '10px 12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
               }}>
@@ -376,6 +387,7 @@ export default function ModoCarreira() {
             <div style={{
               background: '#fff', borderRadius: '14px',
               border: '1.5px solid #E5E7EB', padding: '12px',
+              flexShrink: 0,
             }}>
               <div style={{ fontSize: '12px', fontWeight: '700', color: '#1C1C1C', marginBottom: '8px' }}>
                 Como funciona
@@ -383,7 +395,7 @@ export default function ModoCarreira() {
               {[
                 [iconPlanejamento, 'Fase de grupos', '8 grupos de 4 times. Os 2 primeiros de cada grupo avançam.'],
                 [iconAlvo, 'Mata-mata', 'Oitavas, quartas, semi e final — tudo em ida e volta. Empate no agregado vai para pênaltis.'],
-                [iconCoin, 'Recompensas', 'Você ganha moedas em cada partida, ganhe ou perca. Quem vencer a final leva o prêmio extra.'],
+                [iconSacoMoedas, 'Recompensas', 'Você ganha moedas em cada partida, ganhe ou perca. Quem vencer a final leva o prêmio extra.'],
                 [iconSubstituicao, 'Re-entrada livre', 'Pode entrar em quantos torneios quiser no mês. Só não dá para ter dois ativos ao mesmo tempo.'],
               ].map(([icone, titulo, desc]) => (
                 <div key={titulo} style={{
