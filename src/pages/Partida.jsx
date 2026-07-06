@@ -10,6 +10,7 @@ import {
   descobrirPartidaAtivaDoTecnico,
 } from '../lib/partidaRealtime'
 import { escolherBatedorPenalti, pausarManual, heartbeatDecisao } from '../lib/partidaApi'
+import Campinho from '../components/Campinho'
 import mascote from '../assets/busto_apito.png'
 
 import iconHomeCinza from '../assets/icons/home_cinza.png'
@@ -343,6 +344,11 @@ export default function Partida() {
       titulo: titulos[ev.tipo] ?? ev.tipo,
       descricao: ev.descricao,
       ehMeu,
+      // ★ 05/07/2026 (campinho) — repassados só pro Campinho.jsx consumir;
+      // o feed de texto não usa esses três campos.
+      lado: ev.lado ?? null,
+      pos_x: ev.pos_x ?? null,
+      pos_y: ev.pos_y ?? null,
     }
   }
 
@@ -499,7 +505,6 @@ export default function Partida() {
   const corBarraPenalti = pctPenalti > 50 ? '#10B981' : pctPenalti > 25 ? '#F59E0B' : '#EF4444'
 
   const substituicoesRestantes = LIMITE_SUBSTITUICOES_PARTIDA - substituicoesUsadas
-  const corDominio = dominioAtual > 50 ? meuClube?.cor1 ?? '#F97316' : '#3B82F6'
 
   if (erro && carregando) {
     return (
@@ -566,74 +571,62 @@ export default function Partida() {
       position: 'relative',
     }}>
 
-      <div style={{ background: '#F5F5F5', padding: '14px 20px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
+      <div style={{ background: '#F5F5F5', padding: '10px 20px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flex: 1 }}>
             {meuLado === 'home' ? (
-              <EscudoTime cor1={meuClube.cor1} cor2={meuClube.cor2} size={52} />
+              <EscudoTime cor1={meuClube.cor1} cor2={meuClube.cor2} size={36} />
             ) : (
               adversario.escudoUrl ? (
-                <img src={adversario.escudoUrl} alt={adversario.nome} style={{ width: 52, height: 52, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
-              ) : <EscudoGenerico size={52} />
+                <img src={adversario.escudoUrl} alt={adversario.nome} style={{ width: 36, height: 36, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
+              ) : <EscudoGenerico size={36} />
             )}
-            <span style={{ fontSize: '11px', fontWeight: '900', color: '#1C1C1C', textAlign: 'center' }}>
+            <span style={{ fontSize: '9px', fontWeight: '900', color: '#1C1C1C', textAlign: 'center' }}>
               {(meuLado === 'home' ? meuClube.nome : adversario.nome).toUpperCase()}
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '44px', fontWeight: '900', color: '#1C1C1C', lineHeight: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '30px', fontWeight: '900', color: '#1C1C1C', lineHeight: 1 }}>
                 {placarHome}
               </span>
-              <span style={{ fontSize: '24px', fontWeight: '700', color: '#F97316', lineHeight: 1 }}>x</span>
-              <span style={{ fontSize: '44px', fontWeight: '900', color: '#1C1C1C', lineHeight: 1 }}>
+              <span style={{ fontSize: '16px', fontWeight: '700', color: '#F97316', lineHeight: 1 }}>x</span>
+              <span style={{ fontSize: '30px', fontWeight: '900', color: '#1C1C1C', lineHeight: 1 }}>
                 {placarFora}
               </span>
             </div>
-            <span style={{ fontSize: '13px', fontWeight: '700', color: '#F97316' }}>
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#F97316' }}>
               {fase === 'fim' ? 'FIM DE JOGO' : `${minutoJogo}' · ${fase === 'primeiro' ? '1º TEMPO' : '2º TEMPO'}`}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flex: 1 }}>
             {meuLado === 'away' ? (
-              <EscudoTime cor1={meuClube.cor1} cor2={meuClube.cor2} size={52} />
+              <EscudoTime cor1={meuClube.cor1} cor2={meuClube.cor2} size={36} />
             ) : (
               adversario.escudoUrl ? (
-                <img src={adversario.escudoUrl} alt={adversario.nome} style={{ width: 52, height: 52, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
-              ) : <EscudoGenerico size={52} />
+                <img src={adversario.escudoUrl} alt={adversario.nome} style={{ width: 36, height: 36, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
+              ) : <EscudoGenerico size={36} />
             )}
-            <span style={{ fontSize: '11px', fontWeight: '900', color: '#1C1C1C', textAlign: 'center' }}>
+            <span style={{ fontSize: '9px', fontWeight: '900', color: '#1C1C1C', textAlign: 'center' }}>
               {(meuLado === 'away' ? meuClube.nome : adversario.nome).toUpperCase()}
             </span>
           </div>
         </div>
-        <div style={{ height: '4px', background: '#E5E7EB' }}>
+        <div style={{ height: '3px', background: '#E5E7EB' }}>
           <div style={{ height: '100%', background: '#F97316', width: `${progressoPct}%`, transition: 'width 1s linear' }} />
         </div>
       </div>
 
-      <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-          <span style={{ fontSize: '9px', fontWeight: '700', color: '#9CA3AF', letterSpacing: '0.5px' }}>DOMÍNIO DA PARTIDA</span>
-        </div>
-        <div style={{ width: '100%', height: '6px', borderRadius: '99px', background: '#FEE2E2', overflow: 'hidden', display: 'flex' }}>
-          <div style={{ width: `${dominioAtual}%`, height: '100%', background: '#10B981', transition: 'width 0.6s ease' }} />
-        </div>
-      </div>
-
       {typeof forcaAtaque === 'number' && (
-        <div style={{ display: 'flex', gap: '8px', padding: '8px 16px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '6px', padding: '6px 16px 0', flexShrink: 0 }}>
           {[
-            { label: 'ATAQUE', valor: forcaAtaque, cor: '#EF4444' },
-            { label: 'MEIO', valor: forcaMeio, cor: '#F59E0B' },
-            { label: 'DEFESA', valor: forcaDefesa, cor: '#3B82F6' },
+            { label: 'ATQ', valor: forcaAtaque, cor: '#EF4444' },
+            { label: 'MEI', valor: forcaMeio, cor: '#F59E0B' },
+            { label: 'DEF', valor: forcaDefesa, cor: '#3B82F6' },
           ].map((f) => (
-            <div key={f.label} style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                <span style={{ fontSize: '8px', fontWeight: '700', color: '#9CA3AF' }}>{f.label}</span>
-                <span style={{ fontSize: '9px', fontWeight: '800', color: f.cor }}>{Math.round(f.valor ?? 0)}</span>
-              </div>
-              <div style={{ width: '100%', height: '4px', borderRadius: '99px', background: '#E5E7EB', overflow: 'hidden' }}>
+            <div key={f.label} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '7px', fontWeight: '700', color: '#9CA3AF', flexShrink: 0 }}>{f.label}</span>
+              <div style={{ flex: 1, height: '3px', borderRadius: '99px', background: '#E5E7EB', overflow: 'hidden' }}>
                 <div style={{ width: `${Math.min(100, f.valor ?? 0)}%`, height: '100%', background: f.cor, transition: 'width 0.6s ease' }} />
               </div>
             </div>
@@ -641,21 +634,15 @@ export default function Partida() {
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', gap: '12px', flexShrink: 0 }}>
-        <img src={mascote} alt="Seu Mister" style={{ width: '56px', height: '56px', objectFit: 'contain', flexShrink: 0 }} />
-        <div style={{ border: '2.5px solid #1C1C1C', borderRadius: '14px', padding: '8px 12px', fontSize: '13px', fontWeight: '500', color: '#1C1C1C', lineHeight: '20px', flex: 1 }}>
-          {fase === 'fim' ? 'Apito final! Vamos pro vestiário analisar a partida.' : fala}
-        </div>
+      <div style={{ padding: '8px 16px 0', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <Campinho eventos={eventos} meuLado={meuLado} />
       </div>
 
-      <div style={{ padding: '0 16px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ border: '1.5px solid #E5E7EB', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
-          <div style={{ padding: '10px 16px', borderBottom: '1px solid #E5E7EB', flexShrink: 0 }}>
-            <span style={{ fontSize: '13px', fontWeight: '800', color: '#1C1C1C' }}>EVENTOS EM TEMPO REAL</span>
-          </div>
-          <div ref={eventosRef} style={{ overflowY: 'auto', flex: 1 }}>
+      <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+        <div style={{ border: '1.5px solid #E5E7EB', borderRadius: '10px', overflow: 'hidden', maxHeight: '96px', display: 'flex', flexDirection: 'column' }}>
+          <div ref={eventosRef} style={{ overflowY: 'auto' }}>
             {eventos.length === 0 && (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '13px' }}>
+              <div style={{ padding: '10px', textAlign: 'center', color: '#9CA3AF', fontSize: '11px' }}>
                 A partida está começando...
               </div>
             )}
@@ -665,28 +652,19 @@ export default function Partida() {
               const fundoLinha = ev.ehMeu === true ? '#ECFDF5' : ev.ehMeu === false ? '#FEF2F2' : 'transparent'
               return (
                 <div key={ev.id} style={{
-                  padding: ehGol ? '14px 16px' : ehFaseDiscreta ? '6px 16px' : '10px 16px',
+                  padding: ehGol ? '8px 12px' : '5px 12px',
                   borderBottom: idx < eventos.length - 1 ? '1px solid #F5F5F5' : 'none',
-                  display: 'flex', alignItems: 'center', gap: '10px',
+                  display: 'flex', alignItems: 'center', gap: '8px',
                   background: ehGol ? (ev.ehMeu ? '#D1FAE5' : '#FEE2E2') : fundoLinha,
                 }}>
-                  {iconeEvento(ev.tipo, ev.ehMeu)}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: ehFaseDiscreta ? 0 : '2px' }}>
-                      <span style={{ fontSize: ehGol ? '15px' : ehFaseDiscreta ? '11px' : '13px', fontWeight: '800', color: ehGol ? (ev.ehMeu ? '#10B981' : '#EF4444') : '#F97316' }}>{ev.minuto}'</span>
-                      <span style={{
-                        fontSize: ehGol ? '16px' : ehFaseDiscreta ? '11px' : '12px',
-                        fontWeight: ehGol ? '900' : ehFaseDiscreta ? '500' : '700',
-                        color: ehGol ? (ev.ehMeu ? '#10B981' : '#EF4444') : '#1C1C1C',
-                        letterSpacing: ehGol ? '0.5px' : 'normal',
-                      }}>
-                        {ehGol ? ev.titulo : (ev.descricao || ev.titulo)}
-                      </span>
-                    </div>
-                    {ehGol && ev.descricao && (
-                      <span style={{ fontSize: '12px', color: '#1C1C1C', fontWeight: '500' }}>{ev.descricao}</span>
-                    )}
-                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: '800', color: ehGol ? (ev.ehMeu ? '#10B981' : '#EF4444') : '#F97316', flexShrink: 0 }}>{ev.minuto}'</span>
+                  <span style={{
+                    fontSize: ehGol ? '12px' : '11px',
+                    fontWeight: ehGol ? '900' : ehFaseDiscreta ? '500' : '700',
+                    color: ehGol ? (ev.ehMeu ? '#10B981' : '#EF4444') : '#1C1C1C',
+                  }}>
+                    {ehGol ? ev.titulo : (ev.descricao || ev.titulo)}
+                  </span>
                 </div>
               )
             })}
@@ -703,28 +681,25 @@ export default function Partida() {
       )}
 
       <div style={{ padding: '8px 16px', flexShrink: 0 }}>
-        <div style={{ border: '1.5px solid #E5E7EB', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '14px', fontWeight: '800', color: '#1C1C1C' }}>SUBSTITUIÇÕES</div>
-            <div style={{ fontSize: '12px', fontWeight: '400', color: '#6B7280', marginTop: '2px' }}>
-              {fase === 'fim'
-                ? 'Partida encerrada'
-                : `${substituicoesRestantes} restante${substituicoesRestantes === 1 ? '' : 's'} na partida`}
-            </div>
-          </div>
+        <div style={{ border: '1.5px solid #E5E7EB', borderRadius: '10px', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280' }}>
+            {fase === 'fim'
+              ? 'Partida encerrada'
+              : `${substituicoesRestantes} substituiç${substituicoesRestantes === 1 ? 'ão' : 'ões'} restante${substituicoesRestantes === 1 ? '' : 's'}`}
+          </span>
           <button
             onClick={handleSolicitarPausaManual}
             disabled={pausandoManual || fase === 'fim' || fase === 'intervalo'}
             style={{
               background: pausandoManual || fase === 'fim' || fase === 'intervalo' ? '#E5E7EB' : '#F97316',
               color: pausandoManual || fase === 'fim' || fase === 'intervalo' ? '#9CA3AF' : '#fff',
-              border: 'none', borderRadius: '8px', padding: '10px 16px',
-              fontSize: '13px', fontWeight: '700',
+              border: 'none', borderRadius: '8px', padding: '7px 12px',
+              fontSize: '12px', fontWeight: '700',
               cursor: pausandoManual || fase === 'fim' || fase === 'intervalo' ? 'not-allowed' : 'pointer',
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            {pausandoManual ? 'PAUSANDO...' : 'FAZER SUBSTITUIÇÃO'}
+            {pausandoManual ? 'PAUSANDO...' : 'SUBSTITUIR'}
           </button>
         </div>
       </div>
