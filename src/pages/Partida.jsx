@@ -349,6 +349,7 @@ export default function Partida() {
       lado: ev.lado ?? null,
       pos_x: ev.pos_x ?? null,
       pos_y: ev.pos_y ?? null,
+      pos_lado: ev.pos_lado ?? null,
     }
   }
 
