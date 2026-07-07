@@ -1,7 +1,7 @@
 // src/pages/BuscandoPartida.jsx
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 
 import { buscarPartidaOnline, consultarStatusBusca, cancelarBuscaOnline } from '../lib/partidaApi'
 
@@ -37,7 +37,7 @@ export default function BuscandoPartida() {
   // falha aqui não deve travar a busca de partida (fica na cor padrão).
   useEffect(() => {
     let cancelado = false
-    apiFetch('/api/tecnicos/me', { method: 'GET' })
+    getTecnicoMe()
       .then((resultado) => {
         if (cancelado) return
         const clubeReal = resultado?.tecnico?.clube_proprio

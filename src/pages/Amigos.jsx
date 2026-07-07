@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 
 import iconHomeCinza from '../assets/icons/home_cinza.png'
 import iconHomeLaranja from '../assets/icons/home_laranja.png'
@@ -157,7 +158,7 @@ export default function Amigos() {
 
     async function carregarInicial() {
       try {
-        const tecnicoData = await apiFetch('/api/tecnicos/me', { method: 'GET' })
+        const tecnicoData = await getTecnicoMe()
         if (cancelado) return
         setMeuCodigo(tecnicoData?.tecnico?.codigo ?? null)
       } catch (e) {

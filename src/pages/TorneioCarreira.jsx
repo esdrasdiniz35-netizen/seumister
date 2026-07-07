@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 
 // ─── ÍCONES SVG INLINE ───────────────────────────────────────────────────────
 
@@ -617,7 +618,7 @@ export default function TorneioCarreira() {
       // Busca o clube do técnico (para saber quem é "eu" na tabela e no calendário)
       // Atenção: a rota devolve { tecnico: { clube_proprio_id, ... } } — aninhado,
       // não solto na raiz.
-      const respostaTecnico = await apiFetch('/api/tecnicos/me')
+      const respostaTecnico = await getTecnicoMe()
       setClubeDoTecnicoId(respostaTecnico?.tecnico?.clube_proprio_id || null)
     } catch (e) {
       setErro(e.message || 'Não foi possível carregar o torneio.')

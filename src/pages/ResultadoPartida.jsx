@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 import {
   buscarPartidaAtual,
   buscarEventosDaPartida,
@@ -84,7 +85,7 @@ export default function ResultadoPartida() {
         }
 
         const [tecnicoData, partida] = await Promise.all([
-          apiFetch('/api/tecnicos/me', { method: 'GET' }),
+          getTecnicoMe(),
           buscarPartidaAtual(idDaPartida),
         ])
         if (cancelado) return

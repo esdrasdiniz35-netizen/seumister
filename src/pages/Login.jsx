@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 
 import logo from '../assets/logo.png'
 import mascoteBusto from '../assets/busto_apito.png'
@@ -71,7 +71,7 @@ export default function Login() {
       }
 
       try {
-        const tecnico = await apiFetch('/api/tecnicos/me')
+        const tecnico = await getTecnicoMe({ force: true })
         sessionStorage.setItem('tecnico', JSON.stringify(tecnico))
         navigate('/painel')
       } catch (errApi) {

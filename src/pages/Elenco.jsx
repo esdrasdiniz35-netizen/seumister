@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 
 import iconHomeCinza from '../assets/icons/home_cinza.png'
 import iconHomeLaranja from '../assets/icons/home_laranja.png'
@@ -245,7 +246,7 @@ export default function Elenco() {
     async function carregar() {
       try {
         const [tecnicoData, elencoData] = await Promise.all([
-          apiFetch('/api/tecnicos/me', { method: 'GET' }),
+          getTecnicoMe(),
           apiFetch('/api/elenco', { method: 'GET' }),
         ])
         if (cancelado) return

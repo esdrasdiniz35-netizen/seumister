@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 
 import mascoteBusto from '../assets/busto_joia.png'
 import iconCoin from '../assets/icons/icon-coin.png'
@@ -155,7 +156,7 @@ export default function Painel() {
     async function carregar() {
       try {
         const [tecnicoData, competicaoData] = await Promise.all([
-          apiFetch('/api/tecnicos/me', { method: 'GET' }),
+          getTecnicoMe(),
           apiFetch('/api/competicao/atual', { method: 'GET' }),
         ])
         if (cancelado) return

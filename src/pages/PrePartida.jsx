@@ -1,7 +1,7 @@
 // src/pages/PrePartida.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 import { buscarPartidaAtual, buscarClube } from '../lib/partidaRealtime'
 
 const CONTAGEM_INICIAL = 5
@@ -109,7 +109,7 @@ export default function PrePartida() {
     async function carregar() {
       try {
         const [tecnicoData, partida] = await Promise.all([
-          apiFetch('/api/tecnicos/me', { method: 'GET' }),
+          getTecnicoMe(),
           buscarPartidaAtual(partidaId),
         ])
 

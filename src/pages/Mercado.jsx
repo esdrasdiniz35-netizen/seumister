@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe, invalidateTecnicoCache } from '../lib/cacheTecnico'
 import mascote from '../assets/busto_apito.png'
 
 import iconCoin from '../assets/icons/icon-coin.png'
@@ -188,7 +189,7 @@ export default function Mercado() {
     let cancelado = false
     async function carregar() {
       try {
-        const tecnicoData = await apiFetch('/api/tecnicos/me', { method: 'GET' })
+        const tecnicoData = await getTecnicoMe()
         if (cancelado) return
         const clube = tecnicoData?.tecnico?.clube_proprio
         if (clube) {
@@ -307,6 +308,7 @@ export default function Mercado() {
       })
       setMoedas(resultado.moedas_restantes)
       setCatalogo((prev) => prev.filter((j) => j.id !== jogador.id))
+      invalidateTecnicoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível comprar este jogador.')
     } finally {
@@ -324,6 +326,7 @@ export default function Mercado() {
       })
       setMoedas(resultado.moedas_atuais)
       setMeuElenco((prev) => prev.filter((j) => j.id !== jogador.id))
+      invalidateTecnicoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível vender este jogador.')
     } finally {

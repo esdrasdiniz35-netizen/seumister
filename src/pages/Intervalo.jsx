@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 import {
   buscarPartidaAtual,
   descobrirPartidaAtivaDoTecnico,
@@ -216,7 +217,7 @@ export default function Intervalo() {
         }
 
         const [tecnicoData, partida, elencoData] = await Promise.all([
-          apiFetch('/api/tecnicos/me', { method: 'GET' }),
+          getTecnicoMe(),
           buscarPartidaAtual(idDaPartida),
           apiFetch('/api/elenco', { method: 'GET' }).catch(() => null),
         ])

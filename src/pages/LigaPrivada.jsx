@@ -1,7 +1,7 @@
 // src/pages/LigaPrivada.jsx
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 import {
   criarLiga,
   listarLigasAbertas,
@@ -158,7 +158,7 @@ export default function LigaPrivada() {
     async function carregar() {
       try {
         const [tecnicoData] = await Promise.all([
-          apiFetch('/api/tecnicos/me', { method: 'GET' }),
+          getTecnicoMe(),
           carregarListas(),
         ])
         if (cancelado) return

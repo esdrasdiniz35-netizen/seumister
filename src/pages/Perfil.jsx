@@ -1,7 +1,7 @@
 // src/pages/Perfil.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 import { supabase } from '../lib/supabaseClient'
 
 import iconConfig from '../assets/icons/config.png'
@@ -134,7 +134,7 @@ export default function Perfil() {
 
     async function carregar() {
       try {
-        const data = await apiFetch('/api/tecnicos/me', { method: 'GET' })
+        const data = await getTecnicoMe()
         if (cancelado) return
         setTecnico(data?.tecnico ?? null)
         setClube(data?.tecnico?.clube_proprio ?? null)

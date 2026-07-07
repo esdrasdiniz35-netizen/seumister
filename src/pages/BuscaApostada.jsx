@@ -1,7 +1,7 @@
 // src/pages/BuscaApostada.jsx
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { getTecnicoMe } from '../lib/cacheTecnico'
 import { buscarPartidaApostada, consultarStatusBusca, cancelarBuscaOnline } from '../lib/partidaApi'
 
 import iconCoin from '../assets/icons/icon-coin.png'
@@ -45,7 +45,7 @@ export default function BuscaApostada() {
   // Busca nível de título e saldo reais do técnico ao montar a tela.
   useEffect(() => {
     let cancelado = false
-    apiFetch('/api/tecnicos/me', { method: 'GET' })
+    getTecnicoMe()
       .then((resultado) => {
         if (cancelado) return
         const tecnico = resultado?.tecnico
