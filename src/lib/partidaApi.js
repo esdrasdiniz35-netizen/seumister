@@ -137,10 +137,15 @@ export async function confirmarRetomadaManual(partidaId) {
  * quais entradas são reposicionamento (livre) e quais são trocas banco
  * <-> campo (consomem saldo de substituições), aceitando parcialmente se
  * o saldo não cobrir tudo que foi enviado.
+ *
+ * postura (opcional) é 'ofensivo' | 'equilibrado' | 'defensivo' — se
+ * omitido, o backend mantém a postura atual sem alterá-la. titulares
+ * continua obrigatório mesmo quando só se quer trocar a postura (é
+ * preciso reenviar os 11 titulares atuais sem alteração).
  */
-export async function ajustarTimeEmCampo(partidaId, titulares) {
+export async function ajustarTimeEmCampo(partidaId, titulares, postura) {
   return apiFetch(`/api/partida/${partidaId}/ajustar-time-em-campo`, {
     method: 'PUT',
-    body: { titulares },
+    body: postura !== undefined ? { titulares, postura } : { titulares },
   })
 }

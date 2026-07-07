@@ -145,6 +145,12 @@ const DURACAO_SEM_ACAO = 10
 const DURACAO_COM_ACAO = 15
 const LIMITE_SUBSTITUICOES_PARTIDA = 5
 
+const POSTURAS = [
+  { valor: 'ofensivo', label: 'OFENSIVO' },
+  { valor: 'equilibrado', label: 'EQUILIBRADO' },
+  { valor: 'defensivo', label: 'DEFENSIVO' },
+]
+
 function calcularCansacoPct(minutosJogados) {
   const queda = Math.min(0.25, ((minutosJogados ?? 0) / 90) * 0.25)
   return Math.round((1 - queda) * 100)
@@ -174,6 +180,9 @@ export default function Intervalo() {
   const [titulares, setTitulares] = useState([])
   const [reservas, setReservas] = useState([])
   const [modoEdicao, setModoEdicao] = useState(false)
+
+  const [postura, setPostura] = useState('equilibrado')
+  const [salvandoPostura, setSalvandoPostura] = useState(false)
 
   const substituicaoObrigatoria = motivoPausa === 'lesao'
   const aindaPrecisaSubstituir = substituicaoObrigatoria &&
@@ -284,6 +293,7 @@ export default function Intervalo() {
         setTitulares(titularesAtuais)
         setReservas(reservasAtuais)
         idsReservasOriginaisRef.current = new Set(reservasAtuais.map((j) => j.id))
+        setPostura((lado === 'away' ? partida.postura_away : partida.postura_home) ?? 'equilibrado')
 
         if (ehMinhaLesao && lesionado) {
           setMotivoPausa('lesao')
@@ -463,6 +473,31 @@ export default function Intervalo() {
     setFormacao(novaFormacao)
   }
 
+  const handleMudarPostura = async (novaPostura) => {
+    if (novaPostura === postura || salvandoPostura || salvando) return
+    if (titulares.length !== 11) {
+      setErro('O time precisa ter exatamente 11 titulares em campo.')
+      return
+    }
+
+    setSalvandoPostura(true)
+    setErro(null)
+    try {
+      // postura é opcional na API, mas titulares é sempre obrigatório —
+      // por isso reenviamos o time atual sem alteração junto da troca.
+      await ajustarTimeEmCampo(
+        partidaId,
+        titulares.map((j) => ({ id: j.id, x: j.x, y: j.y })),
+        novaPostura
+      )
+      setPostura(novaPostura)
+    } catch (e) {
+      setErro(e.message || 'Não foi possível ajustar a postura tática.')
+    } finally {
+      setSalvandoPostura(false)
+    }
+  }
+
   const handleSalvar = async () => {
     if (!modoEdicao) {
       setModoEdicao(true)
@@ -629,6 +664,34 @@ export default function Intervalo() {
               fontFamily: "'Inter', sans-serif",
             }}>
               {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* POSTURA TÁTICA */}
+      <div style={{ padding: '0 16px 6px', flexShrink: 0 }}>
+        <div style={{ fontSize: '11px', fontWeight: '700', color: '#6B7280', marginBottom: '6px', letterSpacing: '0.5px' }}>
+          POSTURA TÁTICA
+        </div>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {POSTURAS.map((p) => (
+            <button
+              key={p.valor}
+              onClick={() => handleMudarPostura(p.valor)}
+              disabled={salvandoPostura || salvando}
+              style={{
+                flex: 1, padding: '8px 6px', borderRadius: '10px',
+                border: postura === p.valor ? 'none' : '1.5px solid #E5E7EB',
+                background: postura === p.valor ? '#F97316' : '#fff',
+                color: postura === p.valor ? '#fff' : '#1C1C1C',
+                fontSize: '11px', fontWeight: postura === p.valor ? '700' : '500',
+                cursor: (salvandoPostura || salvando) ? 'default' : 'pointer',
+                opacity: (salvandoPostura || salvando) ? 0.7 : 1,
+                fontFamily: "'Inter', sans-serif", transition: 'background 0.2s',
+              }}
+            >
+              {p.label}
             </button>
           ))}
         </div>

@@ -28,12 +28,12 @@ import iconBallOrange from '../assets/icons/icon-ball-orange.png'
 import iconInjury from '../assets/icons/lesao.png'
 import iconSubstitution from '../assets/icons/subistituicao.png'
 import iconTarget from '../assets/icons/alvo.png'
-import iconGol from '../assets/icons/gol.png'
-import iconAmarelo from '../assets/icons/amarelo.png'
-import iconVermelho from '../assets/icons/vermelho.png'
-import iconPenalti from '../assets/icons/penalti.png'
-import iconMicrofone from '../assets/icons/microfone.png'
-import iconFalta from '../assets/icons/icon-nivel-super-treinador.png'
+import iconGol from '../assets/icons/golnarrado.png'
+import iconAmarelo from '../assets/icons/cartaoamarelo.png'
+import iconVermelho from '../assets/icons/cartaovermelho.png'
+import iconPenalti from '../assets/icons/penalidade.png'
+import iconMicrofone from '../assets/icons/narrador.png'
+import iconFalta from '../assets/icons/falta.png'
 
 const NAV_ITEMS_ESQUERDA = [
   { iconNormal: iconHomeCinza,  iconActive: iconHomeLaranja,  label: 'Início',    path: '/painel',    hasBadge: false },
@@ -49,6 +49,27 @@ const POSICAO_LABEL = { Goalkeeper: 'GOL', Defender: 'ZAG', Midfielder: 'MEI', A
 const DURACAO_SEM_ACAO = 10
 const DURACAO_COM_ACAO = 15
 const LIMITE_SUBSTITUICOES_PARTIDA = 5
+
+// ★ 06/07/2026 — Ritmo de Leitura (Etapa 3). Eventos que chegam do
+// realtime não são mais aplicados na tela na hora: entram numa fila
+// (filaEventosRef) e são revelados um de cada vez, no ritmo abaixo.
+// Placar/domínio/forças/fase viram "estado pausado no tempo" — só
+// avançam junto com o evento que sai da fila, nunca antes.
+const TEMPO_BASE_EVENTO_MS = 2800
+const TEMPO_MINIMO_LEITURA_MS = 1300
+const TAMANHO_FILA_PARA_ACELERACAO_MAXIMA = 6
+const TIPOS_QUE_NUNCA_ACELERAM = new Set([
+  'gol', 'penalti_marcado', 'penalti_sinalizado', 'penalti_perdido', 'cartao_vermelho',
+])
+
+// Atraso acumulado (fila grande) reduz o tempo por evento, mas nunca
+// abaixo do mínimo pra dar tempo de ler — e gol/pênalti/cartão vermelho
+// sempre recebem o tempo cheio, não importa o tamanho da fila.
+function calcularDelayProximoEvento(tipoEvento, tamanhoFilaRestante) {
+  if (TIPOS_QUE_NUNCA_ACELERAM.has(tipoEvento)) return TEMPO_BASE_EVENTO_MS
+  const fatorAtraso = Math.min(1, tamanhoFilaRestante / TAMANHO_FILA_PARA_ACELERACAO_MAXIMA)
+  return Math.round(TEMPO_BASE_EVENTO_MS - fatorAtraso * (TEMPO_BASE_EVENTO_MS - TEMPO_MINIMO_LEITURA_MS))
+}
 
 const EscudoTime = ({ cor1 = '#F97316', cor2 = '#1C1C1C', size = 52 }) => (
   <svg width={size} height={size} viewBox="0 0 64 72" fill="none">
@@ -152,6 +173,13 @@ export default function Partida() {
   const [eventos, setEventos] = useState([])
   const eventosRef = useRef(null)
 
+  // ★ Ritmo de Leitura — ver constantes/comentário acima.
+  const filaEventosRef = useRef([])
+  const processandoFilaRef = useRef(false)
+  const transicaoPendenteRef = useRef(null)
+  const timeoutFilaRef = useRef(null)
+  const snapshotMaisRecenteRef = useRef(null)
+
   const [forcaAtaque, setForcaAtaque] = useState(null)
   const [forcaMeio, setForcaMeio] = useState(null)
   const [forcaDefesa, setForcaDefesa] = useState(null)
@@ -221,6 +249,7 @@ export default function Partida() {
         setAdversario({ nome: clubeAdversario.nome, escudoUrl: clubeAdversario.escudo_url ?? null })
 
         aplicarSnapshotPartida(partida, lado)
+        snapshotMaisRecenteRef.current = partida
 
         const eventosExistentes = await buscarEventosDaPartida(idDaPartida)
         if (cancelado) return
@@ -270,30 +299,77 @@ export default function Partida() {
   useEffect(() => {
     if (!partidaId || !meuLado) return
 
+    // Descobre que tipo de transição (intervalo/pênalti/fim) a nova linha
+    // pede, sem executá-la — só é executada quando a fila de eventos
+    // esvaziar (função abaixo), pra nunca "pular" o jogador pra tela
+    // seguinte com eventos ainda não revelados.
+    function detectarTransicao(novaLinha) {
+      const souEuQuemPausou = novaLinha.lado_pausado === meuLado
+      if (novaLinha.pausada && novaLinha.motivo_pausa === 'lesao' && souEuQuemPausou) return 'intervalo'
+      if (novaLinha.pausada && novaLinha.motivo_pausa === 'manual') return 'intervalo'
+      if (novaLinha.fase === 'intervalo') return 'intervalo'
+      if (novaLinha.pausada && novaLinha.motivo_pausa === 'penalti' && souEuQuemPausou) return 'penalti'
+      if (novaLinha.fase === 'fim') return 'fim'
+      return null
+    }
+
+    function tentarExecutarTransicaoPendente() {
+      const pendente = transicaoPendenteRef.current
+      if (!pendente || filaEventosRef.current.length > 0) return
+      transicaoPendenteRef.current = null
+      aplicarSnapshotPartida(pendente.linha, meuLado)
+      if (pendente.tipo === 'penalti') abrirModalPenalti(pendente.linha)
+      else if (pendente.tipo === 'intervalo') navigate('/intervalo', { state: { partidaId } })
+      else if (pendente.tipo === 'fim') navigate('/resultado-partida', { state: { partidaId } })
+    }
+
+    function processarProximoDaFila() {
+      const fila = filaEventosRef.current
+      if (fila.length === 0) {
+        processandoFilaRef.current = false
+        tentarExecutarTransicaoPendente()
+        return
+      }
+      const item = fila.shift()
+      aplicarSnapshotPartida(item.snapshot, meuLado)
+      setEventos((prev) => [...prev, item.evento])
+      atualizarFala(item.evento, meuLado, idsMeusJogadoresRef.current)
+
+      const delay = calcularDelayProximoEvento(item.evento.tipo, fila.length)
+      timeoutFilaRef.current = setTimeout(processarProximoDaFila, delay)
+    }
+
+    function iniciarProcessamentoSeNecessario() {
+      if (processandoFilaRef.current) return
+      processandoFilaRef.current = true
+      processarProximoDaFila()
+    }
+
     const cancelar = assinarPartida(partidaId, {
       onPartidaAtualizada: (novaLinha) => {
-        aplicarSnapshotPartida(novaLinha, meuLado)
-
-        const souEuQuemPausou = novaLinha.lado_pausado === meuLado
-        if (novaLinha.pausada && novaLinha.motivo_pausa === 'lesao' && souEuQuemPausou) {
-          navigate('/intervalo', { state: { partidaId } })
-        } else if (novaLinha.pausada && novaLinha.motivo_pausa === 'manual') {
-          navigate('/intervalo', { state: { partidaId } })
-        } else if (novaLinha.fase === 'intervalo') {
-          navigate('/intervalo', { state: { partidaId } })
-        } else if (novaLinha.pausada && novaLinha.motivo_pausa === 'penalti' && souEuQuemPausou) {
-          abrirModalPenalti(novaLinha)
-        } else if (novaLinha.fase === 'fim') {
-          navigate('/resultado-partida', { state: { partidaId } })
+        snapshotMaisRecenteRef.current = novaLinha
+        const tipo = detectarTransicao(novaLinha)
+        if (tipo) {
+          transicaoPendenteRef.current = { tipo, linha: novaLinha }
+          if (!processandoFilaRef.current) tentarExecutarTransicaoPendente()
         }
       },
       onNovoEvento: (novoEvento) => {
-        setEventos((prev) => [...prev, formatarEvento(novoEvento, meuLado, idsMeusJogadoresRef.current)])
-        atualizarFala(novoEvento, meuLado, idsMeusJogadoresRef.current)
+        filaEventosRef.current.push({
+          evento: formatarEvento(novoEvento, meuLado, idsMeusJogadoresRef.current),
+          snapshot: snapshotMaisRecenteRef.current,
+        })
+        iniciarProcessamentoSeNecessario()
       },
     })
 
-    return cancelar
+    return () => {
+      cancelar()
+      clearTimeout(timeoutFilaRef.current)
+      processandoFilaRef.current = false
+      filaEventosRef.current = []
+      transicaoPendenteRef.current = null
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partidaId, meuLado])
 
@@ -472,7 +548,7 @@ export default function Partida() {
     if (tipo === 'substituicao')
       return wrap(<img src={iconSubstitution} alt="substituicao" style={{ width: 20, height: 20 }} />);
     if (tipo === 'penalti_perdido')
-      return <IconBolaComX bg={bg} border={border} />;
+      return wrap(<img src={iconPenalti} alt="penalti perdido" style={{ width: 18, height: 18 }} />);
     if (tipo === 'jogada_continuacao' || tipo === 'jogada_pressao' || tipo === 'jogada_saida')
       return wrap(<img src={iconMicrofone} alt="narração" style={{ width: 16, height: 16 }} />);
     if (tipo === 'jogada_construcao')

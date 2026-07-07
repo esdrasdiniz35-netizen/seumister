@@ -14,16 +14,16 @@ import iconBallOrange from '../assets/icons/icon-ball-orange.png'
 import iconInjury from '../assets/icons/lesao.png'
 import iconSubstitution from '../assets/icons/subistituicao.png'
 import iconTarget from '../assets/icons/alvo.png'
-import iconGol from '../assets/icons/gol.png'
-import iconAmarelo from '../assets/icons/amarelo.png'
-import iconVermelho from '../assets/icons/vermelho.png'
-import iconPenaltiIcon from '../assets/icons/penalti.png'
-import iconMicrofone from '../assets/icons/microfone.png'
-import iconFalta from '../assets/icons/icon-nivel-super-treinador.png'
+import iconGol from '../assets/icons/golnarrado.png'
+import iconAmarelo from '../assets/icons/cartaoamarelo.png'
+import iconVermelho from '../assets/icons/cartaovermelho.png'
+import iconPenaltiIcon from '../assets/icons/penalidade.png'
+import iconMicrofone from '../assets/icons/narrador.png'
+import iconFalta from '../assets/icons/falta.png'
 
-const RECOMPENSA_MOEDAS_VS_MAQUINA = { vitoria: 3, empate: 1, derrota: 0 }
+const RECOMPENSA_MOEDAS_VS_MAQUINA = { vitoria: 10, empate: 5, derrota: 0 }
 const RECOMPENSA_XP_VS_MAQUINA = { vitoria: 30, empate: 15, derrota: 5 }
-const RECOMPENSA_MOEDAS_ONLINE = { vitoria: 6, empate: 3, derrota: 0 }
+const RECOMPENSA_MOEDAS_ONLINE = { vitoria: 15, empate: 5, derrota: 0 }
 const RECOMPENSA_XP_ONLINE = { vitoria: 90, empate: 45, derrota: 15 }
 
 const NOTA_MINIMA_PARA_EVOLUIR = 8.5
@@ -264,7 +264,7 @@ export default function ResultadoPartida() {
     if (tipo === 'substituicao')
       return wrap(<img src={iconSubstitution} alt="substituicao" style={{ width: 19, height: 19 }} />)
     if (tipo === 'penalti_perdido')
-      return <IconeBolaComX bg={bg} border={border} />
+      return wrap(<img src={iconPenaltiIcon} alt="penalti perdido" style={{ width: 17, height: 17 }} />)
     if (tipo === 'jogada_saida' || tipo === 'jogada_construcao' || tipo === 'jogada_continuacao' || tipo === 'jogada_pressao')
       return wrap(<img src={iconMicrofone} alt="narração" style={{ width: 15, height: 15 }} />)
     if (tipo === 'jogada_progressao')
