@@ -13,13 +13,11 @@ const SenhaAlterada = lazy(() => import('./pages/SenhaAlterada'))
 const Onboarding1 = lazy(() => import('./pages/Onboarding1'))
 const Onboarding2 = lazy(() => import('./pages/Onboarding2'))
 const Onboarding3 = lazy(() => import('./pages/Onboarding3'))
-const Draft = lazy(() => import('./pages/Draft'))
 const Painel = lazy(() => import('./pages/Painel'))
 const Jogar = lazy(() => import('./pages/jogar'))
 const Elenco = lazy(() => import('./pages/Elenco'))
 const Mercado = lazy(() => import('./pages/Mercado'))
 const Partida = lazy(() => import('./pages/Partida'))
-const Intervalo = lazy(() => import('./pages/Intervalo'))
 const LigaPrivada = lazy(() => import('./pages/LigaPrivada'))
 const Perfil = lazy(() => import('./pages/Perfil'))
 
@@ -94,7 +92,6 @@ function App() {
           <Route path="/onboarding/1" element={<Onboarding1 />} />
           <Route path="/onboarding/2" element={<Onboarding2 />} />
           <Route path="/onboarding/3" element={<Onboarding3 />} />
-          <Route path="/draft" element={<Draft />} />
 
           {/* Núcleo do jogo */}
           <Route path="/painel" element={<Painel />} />
@@ -102,7 +99,6 @@ function App() {
           <Route path="/elenco" element={<Elenco />} />
           <Route path="/mercado" element={<Mercado />} />
           <Route path="/partida" element={<Partida />} />
-          <Route path="/intervalo" element={<Intervalo />} />
           <Route path="/liga-privada" element={<LigaPrivada />} />
           <Route path="/perfil" element={<Perfil />} />
 

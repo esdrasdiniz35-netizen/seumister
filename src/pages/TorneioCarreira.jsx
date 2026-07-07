@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import { getTecnicoMe } from '../lib/cacheTecnico'
+import { PREMIO_CAMPEAO } from '../lib/modoCarreiraConstants'
 
 // ─── ÍCONES SVG INLINE ───────────────────────────────────────────────────────
 
@@ -530,7 +531,7 @@ function JogoMataMata({ jogo, label }) {
 // ─── TELA DE CAMPEÃO ─────────────────────────────────────────────────────────
 
 function TelaCampeao({ modo, onEntrarDeNovo }) {
-  const premio = modo === 'avancado' ? 200 : 100
+  const premio = modo === 'avancado' ? PREMIO_CAMPEAO.avancado : PREMIO_CAMPEAO.normal
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column',

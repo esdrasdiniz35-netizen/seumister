@@ -7,6 +7,7 @@ import iconPlanejamento from '../assets/icons/planejamento.png'
 import iconAlvo from '../assets/icons/alvo.png'
 import iconSacoMoedas from '../assets/icons/sacodemoedas.png'
 import iconSubstituicao from '../assets/icons/subistituicao.png'
+import { PREMIO_CAMPEAO } from '../lib/modoCarreiraConstants'
 
 // ─── ÍCONES SVG INLINE ───────────────────────────────────────────────────────
 
@@ -214,7 +215,7 @@ export default function ModoCarreira() {
                     fontSize: '11px', fontWeight: '700', color: '#10B981',
                     background: '#ECFDF5', padding: '3px 8px', borderRadius: '99px',
                   }}>
-                    🏆 +100 moedas ao campeão
+                    🏆 +{PREMIO_CAMPEAO.normal} moedas ao campeão
                   </span>
                 </div>
               </div>
@@ -307,7 +308,7 @@ export default function ModoCarreira() {
                       fontSize: '11px', fontWeight: '700', color: '#10B981',
                       background: '#ECFDF5', padding: '3px 8px', borderRadius: '99px',
                     }}>
-                      🏆 +200 moedas ao campeão
+                      🏆 +{PREMIO_CAMPEAO.avancado} moedas ao campeão
                     </span>
                   </div>
                 </div>

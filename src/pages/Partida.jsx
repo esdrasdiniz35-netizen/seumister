@@ -1,5 +1,5 @@
 // src/pages/Partida.jsx
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import { getTecnicoMe } from '../lib/cacheTecnico'
@@ -12,6 +12,8 @@ import {
 } from '../lib/partidaRealtime'
 import { escolherBatedorPenalti, escolherSubstituto, pausarManual, heartbeatDecisao } from '../lib/partidaApi'
 import mascote from '../assets/busto_apito.png'
+
+const IntervaloPopup = lazy(() => import('./Intervalo'))
 
 import iconHomeCinza from '../assets/icons/home_cinza.png'
 import iconHomeLaranja from '../assets/icons/home_laranja.png'
@@ -176,6 +178,8 @@ export default function Partida() {
   const [substituicoesUsadas, setSubstituicoesUsadas] = useState(0)
   const [pausandoManual, setPausandoManual] = useState(false)
 
+  const [intervaloAberto, setIntervaloAberto] = useState(false)
+
   const [penaltiAberto, setPenaltiAberto] = useState(false)
   const [titularesParaPenalti, setTitularesParaPenalti] = useState([])
   const interagiuPenaltiRef = useRef(false)
@@ -249,6 +253,24 @@ export default function Partida() {
         aplicarSnapshotPartida(partida, lado)
         snapshotMaisRecenteRef.current = partida
 
+        // A partida pode já estar pausada esperando uma decisão (pênalti/lesão)
+        // ou em intervalo no momento em que esta tela é montada — por exemplo,
+        // ao recarregar a página, ou ao reconectar depois de ficar em segundo
+        // plano, casos em que o UPDATE realtime que ligou a pausa nunca chega
+        // (o websocket não estava conectado quando ele foi disparado). Sem essa
+        // checagem, o popup de decisão nunca apareceria até a próxima mudança.
+        const pausadaPorMim = partida.lado_pausado === lado
+        if (partida.pausada && partida.motivo_pausa === 'lesao' && pausadaPorMim) {
+          abrirModalLesao(partida, lado)
+        } else if (partida.pausada && partida.motivo_pausa === 'penalti' && pausadaPorMim) {
+          abrirModalPenalti(partida, lado)
+        } else if (
+          partida.fase === 'intervalo' ||
+          (partida.pausada && (partida.motivo_pausa === 'intervalo' || partida.motivo_pausa === 'manual'))
+        ) {
+          setIntervaloAberto(true)
+        }
+
         const eventosExistentes = await buscarEventosDaPartida(idDaPartida)
         if (cancelado) return
         setEventos((eventosExistentes || []).map((ev) => formatarEvento(ev, lado, idsMeusJogadoresRef.current)))
@@ -301,11 +323,15 @@ export default function Partida() {
     // pede, sem executá-la — só é executada quando a fila de eventos
     // esvaziar (função abaixo), pra nunca "pular" o jogador pra tela
     // seguinte com eventos ainda não revelados.
+    function ehPausaDeIntervalo(novaLinha) {
+      return novaLinha.fase === 'intervalo' ||
+        (novaLinha.pausada && (novaLinha.motivo_pausa === 'intervalo' || novaLinha.motivo_pausa === 'manual'))
+    }
+
     function detectarTransicao(novaLinha) {
       const souEuQuemPausou = novaLinha.lado_pausado === meuLado
       if (novaLinha.pausada && novaLinha.motivo_pausa === 'lesao' && souEuQuemPausou) return 'lesao'
-      if (novaLinha.pausada && novaLinha.motivo_pausa === 'manual') return 'intervalo'
-      if (novaLinha.fase === 'intervalo') return 'intervalo'
+      if (ehPausaDeIntervalo(novaLinha)) return 'intervalo'
       if (novaLinha.pausada && novaLinha.motivo_pausa === 'penalti' && souEuQuemPausou) return 'penalti'
       if (novaLinha.fase === 'fim') return 'fim'
       return null
@@ -318,7 +344,7 @@ export default function Partida() {
       aplicarSnapshotPartida(pendente.linha, meuLado)
       if (pendente.tipo === 'penalti') abrirModalPenalti(pendente.linha)
       else if (pendente.tipo === 'lesao') abrirModalLesao(pendente.linha)
-      else if (pendente.tipo === 'intervalo') navigate('/intervalo', { state: { partidaId } })
+      else if (pendente.tipo === 'intervalo') setIntervaloAberto(true)
       else if (pendente.tipo === 'fim') navigate('/resultado-partida', { state: { partidaId } })
     }
 
@@ -347,6 +373,9 @@ export default function Partida() {
     const cancelar = assinarPartida(partidaId, {
       onPartidaAtualizada: (novaLinha) => {
         snapshotMaisRecenteRef.current = novaLinha
+        // Fechamento do popup de intervalo é imediato — não espera a fila
+        // de eventos esvaziar, já que a partida pode ter retomado de fato.
+        if (!ehPausaDeIntervalo(novaLinha)) setIntervaloAberto(false)
         const tipo = detectarTransicao(novaLinha)
         if (tipo) {
           transicaoPendenteRef.current = { tipo, linha: novaLinha }
@@ -432,9 +461,9 @@ export default function Partida() {
     else if (ev.tipo === 'jogada_progressao' && !ehMeu) setFala('Atenção na marcação, eles estão perigosos.')
   }
 
-  const abrirModalPenalti = async (partida) => {
+  const abrirModalPenalti = async (partida, lado = meuLado) => {
     try {
-      const meusJogadores = (meuLado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
+      const meusJogadores = (lado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
       const elencoData = await apiFetch('/api/elenco', { method: 'GET' }).catch(() => null)
       const fotosPorId = new Map()
       if (elencoData) {
@@ -495,9 +524,9 @@ export default function Partida() {
     }
   }
 
-  const abrirModalLesao = async (partida) => {
+  const abrirModalLesao = async (partida, lado = meuLado) => {
     try {
-      const meusJogadores = (meuLado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
+      const meusJogadores = (lado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
       const lesionado = meusJogadores.find((j) => j.aguardandoSubstituicao === true)
       setJogadorLesionadoNome(lesionado?.nome ?? null)
 
@@ -725,8 +754,17 @@ export default function Partida() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
           <div style={{ flex: 1, height: '5px', borderRadius: '99px', overflow: 'hidden', display: 'flex' }}>
-            <div style={{ width: `${pctMeuTime}%`, background: '#10B981', height: '100%', transition: 'width 0.6s ease' }} />
-            <div style={{ width: `${100 - pctMeuTime}%`, background: '#EF4444', height: '100%', transition: 'width 0.6s ease' }} />
+            {meuLado === 'away' ? (
+              <>
+                <div style={{ width: `${100 - pctMeuTime}%`, background: '#EF4444', height: '100%', transition: 'width 0.6s ease' }} />
+                <div style={{ width: `${pctMeuTime}%`, background: '#10B981', height: '100%', transition: 'width 0.6s ease' }} />
+              </>
+            ) : (
+              <>
+                <div style={{ width: `${pctMeuTime}%`, background: '#10B981', height: '100%', transition: 'width 0.6s ease' }} />
+                <div style={{ width: `${100 - pctMeuTime}%`, background: '#EF4444', height: '100%', transition: 'width 0.6s ease' }} />
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -905,6 +943,17 @@ export default function Partida() {
             </div>
           </div>
         </div>
+      )}
+
+      {intervaloAberto && (
+        <Suspense fallback={null}>
+          <IntervaloPopup
+            partidaId={partidaId}
+            meuLado={meuLado}
+            meuClube={meuClube}
+            onVoltar={() => setIntervaloAberto(false)}
+          />
+        </Suspense>
       )}
 
     </div>
