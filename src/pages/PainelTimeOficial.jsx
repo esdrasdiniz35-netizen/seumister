@@ -68,7 +68,7 @@ function NavButton({ item, ativo, navigate }) {
           src={ativo ? item.iconActive : item.iconNormal}
           alt={item.label}
           style={{
-            width: '30px', height: '30px',
+            width: '18px', height: '18px',
             filter: item.isFilter && ativo
               ? 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(0deg) brightness(104%) contrast(97%)'
               : 'none',
@@ -83,7 +83,7 @@ function NavButton({ item, ativo, navigate }) {
         )}
       </div>
       <span style={{
-        fontSize: '10px',
+        fontSize: '8px',
         fontWeight: ativo ? '700' : '400',
         color: ativo ? '#F97316' : '#6B7280',
         fontFamily: "'Inter', sans-serif",
@@ -106,15 +106,15 @@ function BotaoJogar({ ativo, navigate }) {
       }}
     >
       <div style={{
-        width: '58px', height: '58px', borderRadius: '50%',
+        width: '32px', height: '32px', borderRadius: '50%',
         background: ativo ? '#F97316' : '#fff',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: ativo ? '0 4px 12px rgba(249,115,22,0.45)' : '0 2px 8px rgba(0,0,0,0.12)',
         border: ativo ? '4px solid #fff' : '2px solid #E5E7EB',
       }}>
-        <img src={iconBall} alt="Jogar" style={{ width: '28px', height: '28px', filter: ativo ? 'brightness(0) invert(1)' : 'none' }} />
+        <img src={iconBall} alt="Jogar" style={{ width: '18px', height: '18px', filter: ativo ? 'brightness(0) invert(1)' : 'none' }} />
       </div>
-      <span style={{ fontSize: '10px', fontWeight: ativo ? '700' : '400', color: ativo ? '#F97316' : '#6B7280', fontFamily: "'Inter', sans-serif" }}>
+      <span style={{ fontSize: '8px', fontWeight: ativo ? '700' : '400', color: ativo ? '#F97316' : '#6B7280', fontFamily: "'Inter', sans-serif" }}>
         Jogar
       </span>
     </button>
@@ -339,7 +339,7 @@ export default function PainelTimeOficial() {
       {/* BOTTOM NAV */}
       <div style={{
         display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end',
-        padding: '8px 0 10px', borderTop: '1px solid #E5E7EB', background: 'white',
+        padding: '4px 0 5px', borderTop: '1px solid #E5E7EB', background: 'white',
         flexShrink: 0,
       }}>
         {NAV_ITEMS_ESQUERDA.map(item => (

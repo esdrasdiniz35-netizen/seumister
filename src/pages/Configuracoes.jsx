@@ -1,6 +1,8 @@
 // src/pages/Configuracoes.jsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getTecnicoMe } from '../lib/cacheTecnico'
+import { supabase } from '../lib/supabaseClient'
 
 import iconLogout from '../assets/icons/icon-logout.png'
 import iconEye from '../assets/icons/icon-eye.png'
@@ -100,6 +102,30 @@ export default function Configuracoes() {
   })
 
   const [salvo, setSalvo] = useState(false)
+
+  useEffect(() => {
+    let cancelado = false
+    async function carregar() {
+      try {
+        const [tecnicoData, authResult] = await Promise.all([
+          getTecnicoMe(),
+          supabase.auth.getUser(),
+        ])
+        if (cancelado) return
+        const tecnico = tecnicoData?.tecnico
+        const clube = tecnico?.clube_proprio
+        if (clube?.nome) setNomeTime(clube.nome)
+        if (tecnico?.nome) setNomeTecnico(tecnico.nome)
+        const userEmail = authResult?.data?.user?.email
+        if (userEmail) setEmail(userEmail)
+      } catch {
+        // Falha silenciosa — mantém os valores mock como fallback, a
+        // tela continua funcional mesmo sem dado real.
+      }
+    }
+    carregar()
+    return () => { cancelado = true }
+  }, [])
 
   function toggleNotificacao(chave) {
     setNotificacoes(prev => ({ ...prev, [chave]: !prev[chave] }))

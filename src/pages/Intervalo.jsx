@@ -10,7 +10,6 @@ import {
 } from '../lib/partidaRealtime'
 import {
   retomarPartida,
-  escolherSubstituto,
   confirmarRetomadaManual,
   heartbeatDecisao,
   ajustarTimeEmCampo,
@@ -61,7 +60,7 @@ function NavButton({ item, ativo, navigate, naoLidas }) {
       cursor: 'pointer', padding: '0 6px', position: 'relative',
     }}>
       <div style={{ position: 'relative' }}>
-        <img src={ativo ? item.iconActive : item.iconNormal} alt={item.label} style={{ width: '44px', height: '44px' }} />
+        <img src={ativo ? item.iconActive : item.iconNormal} alt={item.label} style={{ width: '24px', height: '24px' }} />
         {item.hasBadge && naoLidas > 0 && (
           <span style={{
             position: 'absolute', top: '0px', right: '2px',
@@ -70,7 +69,7 @@ function NavButton({ item, ativo, navigate, naoLidas }) {
           }} />
         )}
       </div>
-      <span style={{ fontSize: '10px', fontWeight: ativo ? '700' : '400', color: ativo ? '#F97316' : '#6B7280', fontFamily: "'Inter', sans-serif" }}>
+      <span style={{ fontSize: '8px', fontWeight: ativo ? '700' : '400', color: ativo ? '#F97316' : '#6B7280', fontFamily: "'Inter', sans-serif" }}>
         {item.label}
       </span>
     </button>
@@ -89,15 +88,15 @@ function BotaoJogar({ ativo, navigate }) {
       }}
     >
       <div style={{
-        width: '58px', height: '58px', borderRadius: '50%',
+        width: '32px', height: '32px', borderRadius: '50%',
         background: '#fff',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: ativo ? '0 4px 12px rgba(249,115,22,0.45)' : '0 2px 8px rgba(0,0,0,0.12)',
         border: ativo ? '3px solid #F97316' : '2px solid #E5E7EB',
       }}>
-        <img src={ativo ? iconBolaLaranja : iconBolaCinza} alt="Jogar" style={{ width: '48px', height: '48px' }} />
+        <img src={ativo ? iconBolaLaranja : iconBolaCinza} alt="Jogar" style={{ width: '26px', height: '26px' }} />
       </div>
-      <span style={{ fontSize: '10px', fontWeight: ativo ? '700' : '400', color: ativo ? '#F97316' : '#6B7280', fontFamily: "'Inter', sans-serif" }}>
+      <span style={{ fontSize: '8px', fontWeight: ativo ? '700' : '400', color: ativo ? '#F97316' : '#6B7280', fontFamily: "'Inter', sans-serif" }}>
         Jogar
       </span>
     </button>
@@ -157,6 +156,47 @@ function calcularCansacoPct(minutosJogados) {
   return Math.round((1 - queda) * 100)
 }
 
+// ★ Anti-sobreposição — os jogadores no campo são posicionados livremente
+// (formação padrão ou arrasto manual) e podiam ficar próximos o bastante
+// pra suas etiquetas de nome se sobreporem visualmente. Empurra qualquer
+// par mais perto que DISTANCIA_MINIMA pra longe um do outro, metade cada.
+// O campo não é quadrado (paddingBottom:'108%' — ver container do campo),
+// então a distância no eixo Y precisa ser corrigida por esse aspect ratio
+// antes de comparar com a distância no eixo X.
+const DISTANCIA_MINIMA = 13
+const ASPECT_RATIO_CAMPO = 108 / 100
+
+function distanciaAjustada(a, b) {
+  const dx = a.x - b.x
+  const dy = (a.y - b.y) * ASPECT_RATIO_CAMPO
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+function resolverColisoes(jogadores, passadas = 2) {
+  const atual = jogadores.map((j) => ({ ...j }))
+  for (let p = 0; p < passadas; p++) {
+    for (let i = 0; i < atual.length; i++) {
+      for (let k = i + 1; k < atual.length; k++) {
+        const a = atual[i]
+        const b = atual[k]
+        if (typeof a.x !== 'number' || typeof b.x !== 'number') continue
+        const dist = distanciaAjustada(a, b)
+        if (dist === 0 || dist >= DISTANCIA_MINIMA) continue
+        const falta = DISTANCIA_MINIMA - dist
+        const dx = (a.x - b.x) / (dist || 1)
+        const dy = (a.y - b.y) / (dist || 1)
+        const empurraX = (dx * falta) / 2
+        const empurraY = (dy * falta) / 2
+        a.x = Math.min(95, Math.max(5, a.x + empurraX))
+        a.y = Math.min(95, Math.max(5, a.y + empurraY))
+        b.x = Math.min(95, Math.max(5, b.x - empurraX))
+        b.y = Math.min(95, Math.max(5, b.y - empurraY))
+      }
+    }
+  }
+  return atual
+}
+
 export default function Intervalo() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -173,10 +213,6 @@ export default function Intervalo() {
   const [partidaEntreDoisHumanos, setPartidaEntreDoisHumanos] = useState(false)
   const [substituicoesUsadas, setSubstituicoesUsadas] = useState(0)
 
-  const [jogadorLesionadoId, setJogadorLesionadoId] = useState(null)
-  const [jogadorLesionadoNome, setJogadorLesionadoNome] = useState(null)
-  const idsReservasOriginaisRef = useRef(new Set())
-
   const [formacao, setFormacao] = useState('4-3-3')
   const [titulares, setTitulares] = useState([])
   const [reservas, setReservas] = useState([])
@@ -184,10 +220,6 @@ export default function Intervalo() {
 
   const [postura, setPostura] = useState('equilibrado')
   const [salvandoPostura, setSalvandoPostura] = useState(false)
-
-  const substituicaoObrigatoria = motivoPausa === 'lesao'
-  const aindaPrecisaSubstituir = substituicaoObrigatoria &&
-    titulares.some((j) => j.id === jogadorLesionadoId)
 
   const [tempoTotal, setTempoTotal] = useState(DURACAO_SEM_ACAO)
   const [tempoRestante, setTempoRestante] = useState(DURACAO_SEM_ACAO)
@@ -281,9 +313,7 @@ export default function Intervalo() {
           .filter((j) => j.titular === false)
           .map(formatarJogador)
 
-        const lesionado = jogadoresDoMeuLado.find((j) => j.aguardandoSubstituicao === true)
         const motivo = partida.motivo_pausa
-        const ehMinhaLesao = motivo === 'lesao' && partida.lado_pausado === lado
         const ehMinhaPausaManual = motivo === 'manual'
 
         setPartidaId(idDaPartida)
@@ -291,26 +321,11 @@ export default function Intervalo() {
         setMeuClube({ nome: clube.nome, cor1: clube.cor_primaria ?? '#F97316', cor2: clube.cor_secundaria ?? '#1C1C1C' })
         setPartidaEntreDoisHumanos(partida.modo === 'online' || partida.modo === 'apostada' || partida.modo === 'liga')
         setSubstituicoesUsadas((lado === 'away' ? partida.substituicoes_usadas_away : partida.substituicoes_usadas_home) ?? 0)
-        setTitulares(titularesAtuais)
+        setTitulares(resolverColisoes(titularesAtuais))
         setReservas(reservasAtuais)
-        idsReservasOriginaisRef.current = new Set(reservasAtuais.map((j) => j.id))
         setPostura((lado === 'away' ? partida.postura_away : partida.postura_home) ?? 'equilibrado')
 
-        if (ehMinhaLesao && lesionado) {
-          setMotivoPausa('lesao')
-          setJogadorLesionadoId(lesionado.id)
-          setJogadorLesionadoNome(lesionado.nome)
-          setModoEdicao(true)
-          interagiuRef.current = true
-          tempoTotalRef.current = DURACAO_COM_ACAO
-          tempoRestanteRef.current = DURACAO_COM_ACAO
-          setTempoTotal(DURACAO_COM_ACAO)
-          setTempoRestante(DURACAO_COM_ACAO)
-        } else if (ehMinhaPausaManual) {
-          setMotivoPausa('manual')
-        } else {
-          setMotivoPausa(null)
-        }
+        setMotivoPausa(ehMinhaPausaManual ? 'manual' : null)
 
         setCarregando(false)
       } catch (e) {
@@ -401,14 +416,14 @@ export default function Intervalo() {
           const x = Math.min(95, Math.max(5, ((touch.clientX - rect.left) / rect.width) * 100))
           const y = Math.min(95, Math.max(5, ((touch.clientY - rect.top) / rect.height) * 100))
           if (origem === 'campo') {
-            setTitulares((prev) => prev.map((j) => (j.id === jogador.id ? { ...j, x, y } : j)))
+            setTitulares((prev) => resolverColisoes(prev.map((j) => (j.id === jogador.id ? { ...j, x, y } : j))))
           } else {
             setReservas((prev) => prev.filter((j) => j.id !== jogador.id))
             setTitulares((prev) => {
-              if (prev.some((j) => j.id === jogador.id)) {
-                return prev.map((j) => (j.id === jogador.id ? { ...j, x, y } : j))
-              }
-              return [...prev, { ...jogador, x, y }]
+              const base = prev.some((j) => j.id === jogador.id)
+                ? prev.map((j) => (j.id === jogador.id ? { ...j, x, y } : j))
+                : [...prev, { ...jogador, x, y }]
+              return resolverColisoes(base)
             })
           }
           return
@@ -531,15 +546,8 @@ export default function Intervalo() {
   }
 
   const handleVoltar = async () => {
-    if (aindaPrecisaSubstituir) return
-
     try {
-      if (motivoPausa === 'lesao') {
-        const substituto = titulares.find(
-          (j) => j.id !== jogadorLesionadoId && idsReservasOriginaisRef.current.has(j.id)
-        )
-        await escolherSubstituto(partidaId, substituto?.id ?? titulares[0]?.id)
-      } else if (motivoPausa === 'manual') {
+      if (motivoPausa === 'manual') {
         await confirmarRetomadaManual(partidaId)
       } else if (!partidaEntreDoisHumanos) {
         await retomarPartida(partidaId)
@@ -610,12 +618,12 @@ export default function Intervalo() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
             <div style={{
-              background: aindaPrecisaSubstituir ? '#FEF2F2' : '#FFF7ED',
-              border: `1.5px solid ${aindaPrecisaSubstituir ? '#EF4444' : '#F97316'}`,
+              background: '#FFF7ED',
+              border: '1.5px solid #F97316',
               borderRadius: '20px', padding: '4px 12px',
             }}>
-              <span style={{ fontSize: '12px', fontWeight: '700', color: aindaPrecisaSubstituir ? '#EF4444' : '#F97316' }}>
-                {aindaPrecisaSubstituir ? '🩹 SUBSTITUIR LESIONADO' : motivoPausa === 'manual' ? '⏸ PAUSA TÁTICA' : '⏸ INTERVALO'}
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#F97316' }}>
+                {motivoPausa === 'manual' ? '⏸ PAUSA TÁTICA' : '⏸ INTERVALO'}
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -626,14 +634,6 @@ export default function Intervalo() {
             </div>
           </div>
         </div>
-
-        {aindaPrecisaSubstituir && (
-          <div style={{ background: '#FEF2F2', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid #FECACA' }}>
-            <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: '600' }}>
-              Arraste {jogadorLesionadoNome} para o banco e um reserva para o campo.
-            </span>
-          </div>
-        )}
 
         {erro && !carregando && (
           <div style={{ background: '#FFF7ED', padding: '8px 16px', borderTop: '1px solid #FDBA74' }}>
@@ -716,7 +716,6 @@ export default function Intervalo() {
           </svg>
 
           {titulares.map((jogador) => {
-            const ehLesionado = aindaPrecisaSubstituir && jogador.id === jogadorLesionadoId
             return (
               <div
                 key={jogador.id}
@@ -726,17 +725,17 @@ export default function Intervalo() {
                   transform: 'translate(-50%, -50%)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px',
                   cursor: modoEdicao ? 'grab' : 'default',
-                  userSelect: 'none', touchAction: 'none', zIndex: ehLesionado ? 3 : 2,
+                  userSelect: 'none', touchAction: 'none', zIndex: 2,
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', marginBottom: '2px' }}>
                   <div style={{
                     fontSize: '8px', fontWeight: '700',
-                    color: ehLesionado ? '#fff' : COR_STATUS[jogador.status],
-                    background: ehLesionado ? '#EF4444' : 'rgba(0,0,0,0.75)', borderRadius: '3px',
+                    color: COR_STATUS[jogador.status],
+                    background: 'rgba(0,0,0,0.75)', borderRadius: '3px',
                     padding: '1px 3px', whiteSpace: 'nowrap',
                   }}>
-                    {ehLesionado ? 'lesionado' : jogador.status}
+                    {jogador.status}
                   </div>
                   <div style={{ width: '34px', height: '3px', background: 'rgba(255,255,255,0.3)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ width: `${jogador.cansaco}%`, height: '100%', background: COR_CANSACO(jogador.cansaco), borderRadius: '2px' }} />
@@ -744,10 +743,9 @@ export default function Intervalo() {
                 </div>
                 <div style={{
                   width: '34px', height: '34px', borderRadius: '50%',
-                  border: ehLesionado ? '3px solid #EF4444' : '2px solid white',
+                  border: '2px solid white',
                   overflow: 'hidden', background: '#1C1C1C',
-                  boxShadow: ehLesionado ? '0 0 0 3px rgba(239,68,68,0.3)' : '0 2px 6px rgba(0,0,0,0.5)',
-                  animation: ehLesionado ? 'pulseLesao 1.2s ease-in-out infinite' : 'none',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
                 }}>
                   <img
                     src={jogador.foto ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34`}
@@ -833,24 +831,23 @@ export default function Intervalo() {
         </button>
         <button
           onClick={handleVoltar}
-          disabled={aindaPrecisaSubstituir}
           style={{
             flex: 1,
-            background: aindaPrecisaSubstituir ? '#F3F4F6' : '#fff',
-            color: aindaPrecisaSubstituir ? '#9CA3AF' : '#F97316',
-            border: `2px solid ${aindaPrecisaSubstituir ? '#E5E7EB' : '#F97316'}`,
+            background: '#fff',
+            color: '#F97316',
+            border: '2px solid #F97316',
             borderRadius: '12px', padding: '13px',
             fontSize: '13px', fontWeight: '700', letterSpacing: '0.5px',
-            cursor: aindaPrecisaSubstituir ? 'not-allowed' : 'pointer',
+            cursor: 'pointer',
             fontFamily: "'Inter', sans-serif",
           }}
         >
-          {aindaPrecisaSubstituir ? 'SUBSTITUA PRIMEIRO' : 'VOLTAR À PARTIDA'}
+          VOLTAR À PARTIDA
         </button>
       </div>
 
       {/* BOTTOM NAV */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', padding: '8px 0 10px', borderTop: '1px solid #E5E7EB', background: 'white', flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', padding: '4px 0 5px', borderTop: '1px solid #E5E7EB', background: 'white', flexShrink: 0 }}>
         {NAV_ITEMS_ESQUERDA.map((item) => (
           <NavButton key={item.label} item={item} ativo={false} navigate={navigate} naoLidas={0} />
         ))}
@@ -859,13 +856,6 @@ export default function Intervalo() {
           <NavButton key={item.label} item={item} ativo={false} navigate={navigate} naoLidas={0} />
         ))}
       </div>
-
-      <style>{`
-        @keyframes pulseLesao {
-          0%, 100% { box-shadow: 0 0 0 3px rgba(239,68,68,0.3); }
-          50% { box-shadow: 0 0 0 6px rgba(239,68,68,0.15); }
-        }
-      `}</style>
     </div>
   )
 }

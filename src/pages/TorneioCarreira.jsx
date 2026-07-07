@@ -832,109 +832,117 @@ export default function TorneioCarreira() {
             </div>
           )}
 
-          {/* SCROLL AREA */}
-          <div style={{
-            flex: 1, minHeight: 0, overflowY: 'auto',
-            padding: '14px 16px',
-            display: 'flex', flexDirection: 'column', gap: '14px',
-          }}>
+          {/* CONTEÚDO DA FASE — sem scroll próprio, só distribui espaço
+              entre a área de tabelas/chave e o rodapé fixo abaixo. */}
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-            {/* Fase de grupos: tabela + calendário */}
-            {statusFaseGrupos && competicao.classificacao && (
-              <>
-                <TabelaClassificacao
-                  classificacao={competicao.classificacao}
-                  clubeDoTecnicoId={clubeDoTecnicoId}
-                />
-                <CalendarioGrupo
-                  partidas={partidas}
-                  clubeDoTecnicoId={clubeDoTecnicoId}
-                  classificacao={competicao.classificacao}
-                />
-              </>
-            )}
-
-            {/* Mata-mata: chave do confronto atual */}
-            {statusMataMata && chave && (
-              <ChaveMataMata chave={chave} modo={competicao.modo} />
-            )}
-
-            {/* Aviso de partida em andamento (partida_real_id existe mas ainda não terminou) */}
-            {statusFaseGrupos &&
-              partidas.some((p) => !p.jogada && p.partida_real_id) && (
-              <div style={{
-                background: '#FFF7ED', border: '1.5px solid #FDBA74',
-                borderRadius: '12px', padding: '12px 14px',
-              }}>
-                <div style={{ fontSize: '12px', fontWeight: '700', color: '#92400E', marginBottom: '4px' }}>
-                  ⏱ Partida em andamento
+            {statusFaseGrupos && competicao.classificacao ? (
+              /* Fase de grupos: Classificação e Seus Jogos, cada uma com scroll independente */
+              <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '14px', padding: '14px 16px 0' }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  <TabelaClassificacao
+                    classificacao={competicao.classificacao}
+                    clubeDoTecnicoId={clubeDoTecnicoId}
+                  />
                 </div>
-                <div style={{ fontSize: '12px', color: '#92400E' }}>
-                  Você tem uma partida deste torneio ainda em andamento. Termine-a para registrar o resultado.
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  <CalendarioGrupo
+                    partidas={partidas}
+                    clubeDoTecnicoId={clubeDoTecnicoId}
+                    classificacao={competicao.classificacao}
+                  />
                 </div>
+              </div>
+            ) : (
+              /* Mata-mata: chave do confronto atual, scroll único */
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px 0' }}>
+                {statusMataMata && chave && (
+                  <ChaveMataMata chave={chave} modo={competicao.modo} />
+                )}
               </div>
             )}
 
-            {/* ── DESISTIR DO TORNEIO ──────────────────────────────────────────
-                Link discreto no rodapé (decisão fechada 30/06/2026): sempre
-                visível enquanto o torneio está ativo, qualquer fase. A
-                entrada paga não é reembolsada — texto de confirmação deixa
-                isso explícito antes de executar. */}
-            <div style={{
-              marginTop: '8px',
-              paddingTop: '16px',
-              borderTop: '1px solid #E5E7EB',
-              textAlign: 'center',
-            }}>
-              {!confirmandoDesistencia ? (
-                <button
-                  onClick={handleDesistir}
-                  style={{
-                    background: 'transparent', border: 'none',
-                    color: '#9CA3AF', fontSize: '12px', fontWeight: '600',
-                    cursor: 'pointer', textDecoration: 'underline',
-                    padding: '4px',
-                  }}
-                >
-                  Desistir do torneio
-                </button>
-              ) : (
+            {/* Rodapé fixo — fora do scroll das tabelas, sempre alcançável
+                sem precisar rolar past elas. */}
+            <div style={{ flexShrink: 0, padding: '12px 16px 14px' }}>
+
+              {/* Aviso de partida em andamento (partida_real_id existe mas ainda não terminou) */}
+              {statusFaseGrupos &&
+                partidas.some((p) => !p.jogada && p.partida_real_id) && (
                 <div style={{
-                  background: '#FEF2F2', border: '1.5px solid #FECACA',
-                  borderRadius: '12px', padding: '14px',
-                  display: 'flex', flexDirection: 'column', gap: '10px',
+                  background: '#FFF7ED', border: '1.5px solid #FDBA74',
+                  borderRadius: '12px', padding: '12px 14px', marginBottom: '14px',
                 }}>
-                  <div style={{ fontSize: '12px', color: '#991B1B', lineHeight: '1.5' }}>
-                    <strong>Tem certeza?</strong> Você vai sair do torneio agora e perder todo o progresso. A moeda que você pagou para entrar não será devolvida.
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#92400E', marginBottom: '4px' }}>
+                    ⏱ Partida em andamento
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => setConfirmandoDesistencia(false)}
-                      disabled={desistindo}
-                      style={{
-                        background: '#fff', color: '#6B7280',
-                        border: '1px solid #E5E7EB', borderRadius: '10px',
-                        padding: '9px 16px', fontSize: '12px', fontWeight: '600',
-                        cursor: desistindo ? 'default' : 'pointer',
-                      }}
-                    >
-                      Continuar jogando
-                    </button>
-                    <button
-                      onClick={handleDesistir}
-                      disabled={desistindo}
-                      style={{
-                        background: desistindo ? '#D1D5DB' : '#EF4444',
-                        color: '#fff', border: 'none', borderRadius: '10px',
-                        padding: '9px 16px', fontSize: '12px', fontWeight: '700',
-                        cursor: desistindo ? 'default' : 'pointer',
-                      }}
-                    >
-                      {desistindo ? 'Saindo...' : 'Sim, desistir'}
-                    </button>
+                  <div style={{ fontSize: '12px', color: '#92400E' }}>
+                    Você tem uma partida deste torneio ainda em andamento. Termine-a para registrar o resultado.
                   </div>
                 </div>
               )}
+
+              {/* ── DESISTIR DO TORNEIO ──────────────────────────────────────────
+                  Link discreto no rodapé (decisão fechada 30/06/2026): sempre
+                  visível enquanto o torneio está ativo, qualquer fase. A
+                  entrada paga não é reembolsada — texto de confirmação deixa
+                  isso explícito antes de executar. */}
+              <div style={{
+                paddingTop: '16px',
+                borderTop: '1px solid #E5E7EB',
+                textAlign: 'center',
+              }}>
+                {!confirmandoDesistencia ? (
+                  <button
+                    onClick={handleDesistir}
+                    style={{
+                      background: 'transparent', border: 'none',
+                      color: '#9CA3AF', fontSize: '12px', fontWeight: '600',
+                      cursor: 'pointer', textDecoration: 'underline',
+                      padding: '4px',
+                    }}
+                  >
+                    Desistir do torneio
+                  </button>
+                ) : (
+                  <div style={{
+                    background: '#FEF2F2', border: '1.5px solid #FECACA',
+                    borderRadius: '12px', padding: '14px',
+                    display: 'flex', flexDirection: 'column', gap: '10px',
+                  }}>
+                    <div style={{ fontSize: '12px', color: '#991B1B', lineHeight: '1.5' }}>
+                      <strong>Tem certeza?</strong> Você vai sair do torneio agora e perder todo o progresso. A moeda que você pagou para entrar não será devolvida.
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => setConfirmandoDesistencia(false)}
+                        disabled={desistindo}
+                        style={{
+                          background: '#fff', color: '#6B7280',
+                          border: '1px solid #E5E7EB', borderRadius: '10px',
+                          padding: '9px 16px', fontSize: '12px', fontWeight: '600',
+                          cursor: desistindo ? 'default' : 'pointer',
+                        }}
+                      >
+                        Continuar jogando
+                      </button>
+                      <button
+                        onClick={handleDesistir}
+                        disabled={desistindo}
+                        style={{
+                          background: desistindo ? '#D1D5DB' : '#EF4444',
+                          color: '#fff', border: 'none', borderRadius: '10px',
+                          padding: '9px 16px', fontSize: '12px', fontWeight: '700',
+                          cursor: desistindo ? 'default' : 'pointer',
+                        }}
+                      >
+                        {desistindo ? 'Saindo...' : 'Sim, desistir'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
             </div>
 
           </div>

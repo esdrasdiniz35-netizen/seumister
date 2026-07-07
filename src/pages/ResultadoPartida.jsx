@@ -11,10 +11,6 @@ import {
 } from '../lib/partidaRealtime'
 import { verificarSeFinalDeLiga } from '../lib/ligasApi'
 
-import iconBallOrange from '../assets/icons/icon-ball-orange.png'
-import iconInjury from '../assets/icons/lesao.png'
-import iconSubstitution from '../assets/icons/subistituicao.png'
-import iconTarget from '../assets/icons/alvo.png'
 import iconGol from '../assets/icons/golnarrado.png'
 import iconAmarelo from '../assets/icons/cartaoamarelo.png'
 import iconVermelho from '../assets/icons/cartaovermelho.png'
@@ -228,61 +224,22 @@ export default function ResultadoPartida() {
     return { bg: '#F3F4F6', border: '#9CA3AF' }
   }
 
-  const IconeBolaComX = ({ bg, border }) => (
-    <div style={{ width: 32, height: 32, borderRadius: '50%', background: bg, border: `2px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="7" stroke={border} strokeWidth="1.5" fill="none"/>
-        <path d="M4 4L16 16M16 4L4 16" stroke={border} strokeWidth="2" strokeLinecap="round"/>
-      </svg>
-    </div>
-  )
+  const ICONE_POR_TIPO_EVENTO = {
+    gol: iconGol, penalti_marcado: iconGol,
+    penalti_sinalizado: iconPenaltiIcon, penalti_perdido: iconPenaltiIcon,
+    cartao_amarelo: iconAmarelo,
+    cartao_vermelho: iconVermelho,
+    falta: iconFalta,
+  }
 
   const iconeEvento = (tipo, ehMeu) => {
     const { bg, border } = corPorTime(ehMeu)
-    const wrap = (children) => (
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: bg, border: `2px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {children}
+    const src = ICONE_POR_TIPO_EVENTO[tipo] ?? iconMicrofone
+    return (
+      <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', border: `2px solid ${border}`, background: bg, flexShrink: 0 }}>
+        <img src={src} alt={tipo} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
       </div>
     )
-    if (tipo === 'gol' || tipo === 'penalti_marcado')
-      return (
-        <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, border: `3px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <img src={iconGol} alt="gol" style={{ width: 23, height: 23 }} />
-        </div>
-      )
-    if (tipo === 'penalti_sinalizado')
-      return (
-        <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, border: `3px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <img src={iconPenaltiIcon} alt="penalti" style={{ width: 21, height: 21 }} />
-        </div>
-      )
-    if (tipo === 'cartao_amarelo')
-      return wrap(<img src={iconAmarelo} alt="amarelo" style={{ width: 17, height: 17 }} />)
-    if (tipo === 'cartao_vermelho')
-      return wrap(<img src={iconVermelho} alt="vermelho" style={{ width: 17, height: 17 }} />)
-    if (tipo === 'lesao')
-      return wrap(<img src={iconInjury} alt="lesao" style={{ width: 19, height: 19 }} />)
-    if (tipo === 'substituicao')
-      return wrap(<img src={iconSubstitution} alt="substituicao" style={{ width: 19, height: 19 }} />)
-    if (tipo === 'penalti_perdido')
-      return wrap(<img src={iconPenaltiIcon} alt="penalti perdido" style={{ width: 17, height: 17 }} />)
-    if (tipo === 'jogada_saida' || tipo === 'jogada_construcao' || tipo === 'jogada_continuacao' || tipo === 'jogada_pressao')
-      return wrap(<img src={iconMicrofone} alt="narração" style={{ width: 15, height: 15 }} />)
-    if (tipo === 'jogada_progressao')
-      return wrap(<img src={iconBallOrange} alt="ataque" style={{ width: 15, height: 15 }} />)
-    if (tipo === 'jogada_desarme' || tipo === 'jogada_defesa')
-      return wrap(<img src={iconTarget} alt="defesa" style={{ width: 15, height: 15 }} />)
-    if (tipo === 'jogada_fora')
-      return <IconeBolaComX bg={bg} border={border} />
-    if (tipo === 'jogada_escanteio')
-      return wrap(<img src={iconBallOrange} alt="escanteio" style={{ width: 15, height: 15 }} />)
-    if (tipo === 'disputa_dura')
-      return wrap(<img src={iconTarget} alt="disputa" style={{ width: 15, height: 15 }} />)
-    if (tipo === 'falta')
-      return wrap(<img src={iconFalta} alt="falta" style={{ width: 17, height: 17 }} />)
-    if (tipo === 'lesao_iniciada')
-      return wrap(<img src={iconInjury} alt="atenção" style={{ width: 15, height: 15, opacity: 0.6 }} />)
-    return null
   }
 
   const handleSair = () => navigate('/jogar')

@@ -42,7 +42,7 @@ function NavButton({ item, ativo, badge, navigate }) {
         <img
           src={ativo ? item.iconActive : item.iconNormal}
           alt={item.label}
-          style={{ width: '44px', height: '44px' }}
+          style={{ width: '24px', height: '24px' }}
         />
         {badge && (
           <span style={{
@@ -53,7 +53,7 @@ function NavButton({ item, ativo, badge, navigate }) {
         )}
       </div>
       <span style={{
-        fontSize: '10px',
+        fontSize: '8px',
         fontWeight: ativo ? '700' : '400',
         color: ativo ? '#F97316' : '#6B7280',
         fontFamily: "'Inter', sans-serif",
@@ -77,7 +77,7 @@ function BotaoJogar({ ativo, navigate }) {
       }}
     >
       <div style={{
-        width: '58px', height: '58px', borderRadius: '50%',
+        width: '32px', height: '32px', borderRadius: '50%',
         background: '#fff',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: ativo
@@ -88,11 +88,11 @@ function BotaoJogar({ ativo, navigate }) {
         <img
           src={ativo ? iconBolaLaranja : iconBolaCinza}
           alt="Jogar"
-          style={{ width: '48px', height: '48px' }}
+          style={{ width: '26px', height: '26px' }}
         />
       </div>
       <span style={{
-        fontSize: '10px',
+        fontSize: '8px',
         fontWeight: ativo ? '700' : '400',
         color: ativo ? '#F97316' : '#6B7280',
         fontFamily: "'Inter', sans-serif",
@@ -290,7 +290,7 @@ export default function Jogar() {
       {/* BOTTOM NAV — Jogar em destaque no centro, ativo só nesta tela */}
       <div style={{
         display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end',
-        padding: '8px 0 10px', borderTop: '1px solid #E5E7EB', background: 'white',
+        padding: '4px 0 5px', borderTop: '1px solid #E5E7EB', background: 'white',
         flexShrink: 0,
       }}>
         {NAV_ITEMS_ESQUERDA.map(item => (
