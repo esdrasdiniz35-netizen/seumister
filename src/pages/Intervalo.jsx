@@ -296,7 +296,7 @@ export default function Intervalo() {
 
         const titularesBrutos = jogadoresDoMeuLado.filter((j) => j.titular !== false)
         const ORDEM_POSICAO = { Goalkeeper: 0, Defender: 1, Midfielder: 2, Attacker: 3 }
-        const slotsDaFormacao = FORMACOES['4-3-3']
+        const slotsDaFormacao = FORMACOES[formacao] ?? FORMACOES['4-3-3']
         const titularesOrdenados = [...titularesBrutos].sort(
           (a, b) => (ORDEM_POSICAO[a.posicao] ?? 4) - (ORDEM_POSICAO[b.posicao] ?? 4)
         )
