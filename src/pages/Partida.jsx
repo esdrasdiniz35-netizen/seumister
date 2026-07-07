@@ -296,14 +296,14 @@ export default function Partida() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function aplicarSnapshotPartida(partida, lado) {
-    setPlacarHome(partida.placar_home ?? 0)
-    setPlacarFora(partida.placar_away ?? 0)
-    setFase(partida.fase ?? 'primeiro')
+  // ★ Relógio/domínio/força são "estado ao vivo" — atualizam a cada tick
+  // real do servidor via onPartidaAtualizada, sem esperar a fila de
+  // narração esvaziar (ver aplicarEstadoAoVivo). Só placar/fase ficam
+  // "pausados no tempo", presos ao ritmo de leitura da fila.
+  function aplicarEstadoAoVivo(partida, lado) {
     setTickAtual(partida.tempo_atual ?? 0)
     setTickVisual(partida.tempo_atual ?? 0)
     setDominioAtual(partida.dominio_atual ?? 50)
-    setSubstituicoesUsadas((lado === 'away' ? partida.substituicoes_usadas_away : partida.substituicoes_usadas_home) ?? 0)
 
     if (lado === 'away') {
       setForcaAtaque(partida.forca_ataque_away)
@@ -314,6 +314,18 @@ export default function Partida() {
       setForcaMeio(partida.forca_meio_home)
       setForcaDefesa(partida.forca_defesa_home)
     }
+  }
+
+  function aplicarPlacarEFase(partida, lado) {
+    setPlacarHome(partida.placar_home ?? 0)
+    setPlacarFora(partida.placar_away ?? 0)
+    setFase(partida.fase ?? 'primeiro')
+    setSubstituicoesUsadas((lado === 'away' ? partida.substituicoes_usadas_away : partida.substituicoes_usadas_home) ?? 0)
+  }
+
+  function aplicarSnapshotPartida(partida, lado) {
+    aplicarPlacarEFase(partida, lado)
+    aplicarEstadoAoVivo(partida, lado)
   }
 
   useEffect(() => {
@@ -341,7 +353,7 @@ export default function Partida() {
       const pendente = transicaoPendenteRef.current
       if (!pendente || filaEventosRef.current.length > 0) return
       transicaoPendenteRef.current = null
-      aplicarSnapshotPartida(pendente.linha, meuLado)
+      aplicarPlacarEFase(pendente.linha, meuLado)
       if (pendente.tipo === 'penalti') abrirModalPenalti(pendente.linha)
       else if (pendente.tipo === 'lesao') abrirModalLesao(pendente.linha)
       else if (pendente.tipo === 'intervalo') setIntervaloAberto(true)
@@ -356,7 +368,7 @@ export default function Partida() {
         return
       }
       const item = fila.shift()
-      aplicarSnapshotPartida(item.snapshot, meuLado)
+      aplicarPlacarEFase(item.snapshot, meuLado)
       const ehGolComPlacar = (item.evento.tipo === 'gol' || item.evento.tipo === 'penalti_marcado') &&
         item.evento.placarHomeApos != null && item.evento.placarAwayApos != null
       if (ehGolComPlacar) {
@@ -379,6 +391,9 @@ export default function Partida() {
     const cancelar = assinarPartida(partidaId, {
       onPartidaAtualizada: (novaLinha) => {
         snapshotMaisRecenteRef.current = novaLinha
+        // Relógio/domínio/força são estado ao vivo — aplicados na hora,
+        // a cada tick real do servidor, sem esperar a fila de narração.
+        aplicarEstadoAoVivo(novaLinha, meuLado)
         // Fechamento do popup de intervalo é imediato — não espera a fila
         // de eventos esvaziar, já que a partida pode ter retomado de fato.
         if (!ehPausaDeIntervalo(novaLinha)) setIntervaloAberto(false)
@@ -439,6 +454,7 @@ export default function Partida() {
       jogada_construcao: 'Construção',
       jogada_continuacao: 'Jogada em andamento',
       jogada_progressao: ehMeu ? 'Seu time ataca!' : 'Adversário ataca!',
+      jogada_perigosa: ehMeu ? 'Ataque perigoso!' : 'Cuidado, adversário ataca!',
       jogada_desarme: ehMeu ? 'Recuperamos a bola' : 'Adversário recuperou',
       jogada_pressao: ehMeu ? 'Pressão do adversário' : 'Pressão do seu time',
       jogada_fora: 'Chute para fora',

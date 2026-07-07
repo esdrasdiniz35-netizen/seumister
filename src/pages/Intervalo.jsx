@@ -99,7 +99,10 @@ function distanciaAjustada(a, b) {
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-function resolverColisoes(jogadores, passadas = 2) {
+// obstaculosFixos (opcional) são posições reais já configuradas pelo
+// técnico — empurram os jogadores móveis pra longe, mas nunca são
+// movidas elas mesmas.
+function resolverColisoes(jogadores, passadas = 2, obstaculosFixos = []) {
   const atual = jogadores.map((j) => ({ ...j }))
   for (let p = 0; p < passadas; p++) {
     for (let i = 0; i < atual.length; i++) {
@@ -118,6 +121,17 @@ function resolverColisoes(jogadores, passadas = 2) {
         a.y = Math.min(95, Math.max(5, a.y + empurraY))
         b.x = Math.min(95, Math.max(5, b.x - empurraX))
         b.y = Math.min(95, Math.max(5, b.y - empurraY))
+      }
+      for (const obst of obstaculosFixos) {
+        const a = atual[i]
+        if (typeof a.x !== 'number' || typeof obst.x !== 'number') continue
+        const dist = distanciaAjustada(a, obst)
+        if (dist === 0 || dist >= DISTANCIA_MINIMA) continue
+        const falta = DISTANCIA_MINIMA - dist
+        const dx = (a.x - obst.x) / (dist || 1)
+        const dy = (a.y - obst.y) / (dist || 1)
+        a.x = Math.min(95, Math.max(5, a.x + dx * falta))
+        a.y = Math.min(95, Math.max(5, a.y + dy * falta))
       }
     }
   }
@@ -205,13 +219,25 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
           (a, b) => (ORDEM_POSICAO[a.posicao] ?? 4) - (ORDEM_POSICAO[b.posicao] ?? 4)
         )
 
+        // ★ Anti-sobreposição só entra em ação nos jogadores que caíram no
+        // slot de fallback da formação — quem já tem x/y real (posição
+        // configurada de fato pelo técnico no Elenco) nunca é reposicionado,
+        // só serve de obstáculo fixo pro fallback desviar.
+        const idsComPosicaoReal = new Set()
         const titularesAtuais = titularesOrdenados.map((j, indice) => {
           if (typeof j.x === 'number' && typeof j.y === 'number') {
+            idsComPosicaoReal.add(j.id)
             return formatarJogador(j)
           }
           const slot = slotsDaFormacao[indice] ?? slotsDaFormacao[slotsDaFormacao.length - 1] ?? { left: 50, top: 50 }
           return formatarJogador({ ...j, x: slot.left, y: slot.top })
         })
+
+        const titularesComPosicaoReal = titularesAtuais.filter((j) => idsComPosicaoReal.has(j.id))
+        const titularesFallback = titularesAtuais.filter((j) => !idsComPosicaoReal.has(j.id))
+        const fallbackResolvido = resolverColisoes(titularesFallback, 2, titularesComPosicaoReal)
+        const fallbackResolvidoPorId = new Map(fallbackResolvido.map((j) => [j.id, j]))
+        const titularesFinais = titularesAtuais.map((j) => fallbackResolvidoPorId.get(j.id) ?? j)
 
         const reservasAtuais = jogadoresDoMeuLado
           .filter((j) => j.titular === false)
@@ -219,7 +245,7 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
 
         setPartidaEntreDoisHumanos(partida.modo === 'online' || partida.modo === 'apostada' || partida.modo === 'liga')
         setSubstituicoesUsadas((meuLado === 'away' ? partida.substituicoes_usadas_away : partida.substituicoes_usadas_home) ?? 0)
-        setTitulares(resolverColisoes(titularesAtuais))
+        setTitulares(titularesFinais)
         setReservas(reservasAtuais)
         setPostura((meuLado === 'away' ? partida.postura_away : partida.postura_home) ?? 'equilibrado')
         setMotivoPausa(partida.motivo_pausa === 'manual' ? 'manual' : null)
