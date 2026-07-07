@@ -87,11 +87,11 @@ function calcularCansacoPct(minutosJogados) {
 // (formação padrão ou arrasto manual) e podiam ficar próximos o bastante
 // pra suas etiquetas de nome se sobreporem visualmente. Empurra qualquer
 // par mais perto que DISTANCIA_MINIMA pra longe um do outro, metade cada.
-// O campo não é quadrado (paddingBottom:'108%' — ver container do campo),
+// O campo não é quadrado (paddingBottom:'78%' — ver container do campo),
 // então a distância no eixo Y precisa ser corrigida por esse aspect ratio
 // antes de comparar com a distância no eixo X.
 const DISTANCIA_MINIMA = 13
-const ASPECT_RATIO_CAMPO = 108 / 100
+const ASPECT_RATIO_CAMPO = 78 / 100
 
 function distanciaAjustada(a, b) {
   const dx = a.x - b.x
@@ -512,7 +512,7 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
       >
         {/* HEADER */}
         <div style={{ flexShrink: 0, background: '#fff', borderBottom: '1px solid #E5E7EB' }}>
-          <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <EscudoTime cor1={meuClube.cor1} cor2={meuClube.cor2} size={48} contorno="#1C1C1C" />
               <div>
@@ -561,70 +561,71 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
             botão fixo, e só rola se precisar. */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
-        {/* FORMAÇÃO */}
-        <div style={{ padding: '8px 16px 6px', flexShrink: 0 }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', color: '#6B7280', marginBottom: '6px', letterSpacing: '0.5px' }}>
-            FORMAÇÃO
-          </div>
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {Object.keys(FORMACOES).map((f) => (
-              <button key={f} onClick={() => mudarFormacao(f)} style={{
-                padding: '5px 12px', borderRadius: '20px',
-                border: formacao === f ? 'none' : '1.5px solid #E5E7EB',
-                background: formacao === f ? '#F97316' : '#fff',
-                color: formacao === f ? '#fff' : '#1C1C1C',
-                fontSize: '12px', fontWeight: formacao === f ? '700' : '500',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap', flexShrink: 0,
-                fontFamily: "'Inter', sans-serif",
-              }}>
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* POSTURA TÁTICA */}
-        <div style={{ padding: '0 16px 6px', flexShrink: 0 }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', color: '#6B7280', marginBottom: '6px', letterSpacing: '0.5px' }}>
-            POSTURA TÁTICA
-          </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {POSTURAS.map((p) => (
-              <button
-                key={p.valor}
-                onClick={() => handleMudarPostura(p.valor)}
-                style={{
-                  flex: 1, padding: '8px 6px', borderRadius: '10px',
-                  border: postura === p.valor ? 'none' : '1.5px solid #E5E7EB',
-                  background: postura === p.valor ? '#F97316' : '#fff',
-                  color: postura === p.valor ? '#fff' : '#1C1C1C',
-                  fontSize: '11px', fontWeight: postura === p.valor ? '700' : '500',
+        {/* FORMAÇÃO + POSTURA TÁTICA — lado a lado pra economizar altura */}
+        <div style={{ padding: '6px 16px 4px', flexShrink: 0, display: 'flex', gap: '10px' }}>
+          <div style={{ flex: '0 0 40%', minWidth: 0 }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', color: '#6B7280', marginBottom: '4px', letterSpacing: '0.5px' }}>
+              FORMAÇÃO
+            </div>
+            <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {Object.keys(FORMACOES).map((f) => (
+                <button key={f} onClick={() => mudarFormacao(f)} style={{
+                  padding: '5px 10px', borderRadius: '20px',
+                  border: formacao === f ? 'none' : '1.5px solid #E5E7EB',
+                  background: formacao === f ? '#F97316' : '#fff',
+                  color: formacao === f ? '#fff' : '#1C1C1C',
+                  fontSize: '11px', fontWeight: formacao === f ? '700' : '500',
                   cursor: 'pointer',
-                  fontFamily: "'Inter', sans-serif", transition: 'background 0.2s',
-                }}
-              >
-                {p.label}
-              </button>
-            ))}
+                  whiteSpace: 'nowrap', flexShrink: 0,
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', color: '#6B7280', marginBottom: '4px', letterSpacing: '0.5px' }}>
+              POSTURA TÁTICA
+            </div>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              {POSTURAS.map((p) => (
+                <button
+                  key={p.valor}
+                  onClick={() => handleMudarPostura(p.valor)}
+                  style={{
+                    flex: 1, padding: '6px 2px', borderRadius: '8px',
+                    border: postura === p.valor ? 'none' : '1.5px solid #E5E7EB',
+                    background: postura === p.valor ? '#F97316' : '#fff',
+                    color: postura === p.valor ? '#fff' : '#1C1C1C',
+                    fontSize: '9.5px', fontWeight: postura === p.valor ? '700' : '500',
+                    cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif", transition: 'background 0.2s',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* CAMPO */}
         <div style={{ padding: '0 16px', flexShrink: 0 }}>
           <div ref={campoRef} style={{
-            position: 'relative', width: '100%', paddingBottom: '108%',
+            position: 'relative', width: '100%', paddingBottom: '78%',
             background: 'linear-gradient(180deg, #2d8a3e 0%, #3a9e4a 25%, #2d8a3e 50%, #3a9e4a 75%, #2d8a3e 100%)',
             borderRadius: '12px', overflow: 'hidden', border: '2px solid #1a6b2a', touchAction: 'none',
           }}>
-            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 108" preserveAspectRatio="none">
-              <rect x="2" y="2" width="96" height="104" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
-              <line x1="2" y1="54" x2="98" y2="54" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
-              <circle cx="50" cy="54" r="11" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
-              <rect x="22" y="2" width="56" height="16" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
-              <rect x="36" y="2" width="28" height="8" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
-              <rect x="22" y="90" width="56" height="16" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
-              <rect x="36" y="100" width="28" height="6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 78" preserveAspectRatio="none">
+              <rect x="2" y="1.4" width="96" height="75.1" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+              <line x1="2" y1="39" x2="98" y2="39" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+              <circle cx="50" cy="39" r="7.9" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+              <rect x="22" y="1.4" width="56" height="11.6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+              <rect x="36" y="1.4" width="28" height="5.8" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+              <rect x="22" y="65.0" width="56" height="11.6" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
+              <rect x="36" y="72.2" width="28" height="4.3" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8"/>
             </svg>
 
             {titulares.map((jogador) => (
@@ -684,7 +685,7 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
             RESERVAS
           </div>
           <div ref={bancoRef} style={{
-            display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', minHeight: '80px',
+            display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', minHeight: '72px',
             background: 'rgba(249,115,22,0.05)',
             border: '1.5px dashed rgba(249,115,22,0.4)',
             borderRadius: '10px', padding: '4px', transition: 'all 0.2s',
@@ -725,7 +726,7 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
         {/* fim do miolo flex:1 */}
 
         {/* BOTÃO */}
-        <div style={{ padding: '6px 16px 14px', flexShrink: 0 }}>
+        <div style={{ padding: '5px 16px 10px', flexShrink: 0 }}>
           <button
             onClick={handleVoltar}
             disabled={fechando}
@@ -734,7 +735,7 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
               background: '#fff',
               color: '#F97316',
               border: '2px solid #F97316',
-              borderRadius: '12px', padding: '13px',
+              borderRadius: '12px', padding: '11px',
               fontSize: '13px', fontWeight: '700', letterSpacing: '0.5px',
               cursor: fechando ? 'default' : 'pointer',
               opacity: fechando ? 0.7 : 1,

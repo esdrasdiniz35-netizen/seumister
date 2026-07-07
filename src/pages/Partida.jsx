@@ -357,6 +357,12 @@ export default function Partida() {
       }
       const item = fila.shift()
       aplicarSnapshotPartida(item.snapshot, meuLado)
+      const ehGolComPlacar = (item.evento.tipo === 'gol' || item.evento.tipo === 'penalti_marcado') &&
+        item.evento.placarHomeApos != null && item.evento.placarAwayApos != null
+      if (ehGolComPlacar) {
+        setPlacarHome(item.evento.placarHomeApos)
+        setPlacarFora(item.evento.placarAwayApos)
+      }
       setEventos((prev) => [...prev, item.evento])
       atualizarFala(item.evento, meuLado, idsMeusJogadoresRef.current)
 
@@ -448,6 +454,8 @@ export default function Partida() {
       titulo: titulos[ev.tipo] ?? ev.tipo,
       descricao: ev.descricao,
       ehMeu,
+      placarHomeApos: ev.placar_home_apos,
+      placarAwayApos: ev.placar_away_apos,
     }
   }
 
@@ -807,13 +815,26 @@ export default function Partida() {
                 }}>
                   {iconeEvento(ev.tipo, ev.ehMeu)}
                   <span style={{ fontSize: '10px', fontWeight: '800', color: ehGol ? (ev.ehMeu ? '#10B981' : '#EF4444') : '#F97316', flexShrink: 0 }}>{ev.minuto}'</span>
-                  <span style={{
-                    fontSize: ehGol ? '12px' : '11px',
-                    fontWeight: ehGol ? '900' : ehFaseDiscreta ? '500' : '700',
-                    color: ehGol ? (ev.ehMeu ? '#10B981' : '#EF4444') : '#1C1C1C',
-                  }}>
-                    {ehGol ? ev.titulo : (ev.descricao || ev.titulo)}
-                  </span>
+                  {ehGol ? (
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '900', color: ev.ehMeu ? '#10B981' : '#EF4444' }}>
+                        {ev.titulo}
+                      </span>
+                      {ev.descricao && (
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: ev.ehMeu ? '#10B981' : '#EF4444' }}>
+                          {ev.descricao}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: ehFaseDiscreta ? '500' : '700',
+                      color: '#1C1C1C',
+                    }}>
+                      {ev.descricao || ev.titulo}
+                    </span>
+                  )}
                 </div>
               )
             })}
