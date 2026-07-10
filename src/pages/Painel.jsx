@@ -153,12 +153,13 @@ export default function Painel() {
   useEffect(() => {
     let cancelado = false
 
+    // ★ 07/07/2026 — a tela renderiza assim que os dados do técnico chegam
+    // (instantâneo quando o cacheTecnico está quente); o card do torneio
+    // preenche depois, sem segurar o painel inteiro atrás da chamada de
+    // /api/competicao/atual como antes.
     async function carregar() {
       try {
-        const [tecnicoData, competicaoData] = await Promise.all([
-          getTecnicoMe(),
-          apiFetch('/api/competicao/atual', { method: 'GET' }),
-        ])
+        const tecnicoData = await getTecnicoMe()
         if (cancelado) return
 
         const clube = tecnicoData?.tecnico?.clube_proprio
@@ -171,7 +172,6 @@ export default function Painel() {
           setMoedas(clube.moedas ?? 0)
         }
         setNivel(tecnicoData?.tecnico?.nivel_titulo ?? 'Iniciante')
-        setTorneio(competicaoData?.competicao ?? null)
         setCarregando(false)
       } catch (e) {
         if (cancelado) return
@@ -179,6 +179,12 @@ export default function Painel() {
         setCarregando(false)
       }
     }
+
+    apiFetch('/api/competicao/atual', { method: 'GET' })
+      .then((competicaoData) => {
+        if (!cancelado) setTorneio(competicaoData?.competicao ?? null)
+      })
+      .catch(() => {})
 
     carregar()
     return () => { cancelado = true }

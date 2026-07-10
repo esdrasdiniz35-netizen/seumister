@@ -6,6 +6,18 @@
     <meta name="theme-color" content="#F97316" />
     <meta name="description" content="Seu Mister — o manager de futebol feito pra você. Sem propaganda. Nunca." />
 
+    <!-- ★ 07/07/2026 (leva de desempenho) — preconnect abre a conexão
+         TLS com os domínios críticos antes do primeiro request real:
+         fontes (antes descobertas tarde, via @import no CSS) e Supabase
+         (auth + realtime + fotos de jogador). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://hgubvpyafvycmdewwnam.supabase.co" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+    />
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />

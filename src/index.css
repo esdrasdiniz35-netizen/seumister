@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+/* A fonte Inter é carregada no <head> do index.html (com preconnect) —
+   o @import daqui atrasava o primeiro paint porque o browser só
+   descobria a fonte depois de baixar e parsear o CSS do bundle. */
 @import "tailwindcss";
 
 * {

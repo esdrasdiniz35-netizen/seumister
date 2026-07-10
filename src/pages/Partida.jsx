@@ -1,8 +1,9 @@
 // src/pages/Partida.jsx
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
 import { getTecnicoMe } from '../lib/cacheTecnico'
+import { getElencoAtual } from '../lib/cacheElenco'
+import { fotoMiniatura } from '../lib/fotoJogador'
 import {
   assinarPartida,
   buscarPartidaAtual,
@@ -54,8 +55,11 @@ const LIMITE_SUBSTITUICOES_PARTIDA = 5
 // (filaEventosRef) e são revelados um de cada vez, no ritmo abaixo.
 // Placar/domínio/forças/fase viram "estado pausado no tempo" — só
 // avançam junto com o evento que sai da fila, nunca antes.
-const TEMPO_BASE_EVENTO_MS = 2800
-const TEMPO_MINIMO_LEITURA_MS = 1300
+// ★ 07/07/2026 — 2800/1300 -> 2300/1100: com o volume de eventos por
+// partida reduzido (consolidação da narração), a fila raramente acumula,
+// então o ritmo base pode ser mais ágil sem comprometer a leitura.
+const TEMPO_BASE_EVENTO_MS = 2300
+const TEMPO_MINIMO_LEITURA_MS = 1100
 const TAMANHO_FILA_PARA_ACELERACAO_MAXIMA = 6
 const TIPOS_QUE_NUNCA_ACELERAM = new Set([
   'gol', 'penalti_marcado', 'penalti_sinalizado', 'penalti_perdido', 'cartao_vermelho',
@@ -192,6 +196,7 @@ export default function Partida() {
   const [lesaoAberto, setLesaoAberto] = useState(false)
   const [reservasParaLesao, setReservasParaLesao] = useState([])
   const [jogadorLesionadoNome, setJogadorLesionadoNome] = useState(null)
+  const [jogadorLesionadoPosicao, setJogadorLesionadoPosicao] = useState(null)
   const interagiuLesaoRef = useRef(false)
   const tempoTotalLesaoRef = useRef(DURACAO_SEM_ACAO)
   const tempoRestanteLesaoRef = useRef(DURACAO_SEM_ACAO)
@@ -199,7 +204,6 @@ export default function Partida() {
   const [tempoTotalLesao, setTempoTotalLesao] = useState(DURACAO_SEM_ACAO)
   const timerLesaoRef = useRef(null)
 
-  const [fala, setFala] = useState('Vamos com calma, analisando o jogo...')
 
   useEffect(() => {
     let cancelado = false
@@ -376,7 +380,6 @@ export default function Partida() {
         setPlacarFora(item.evento.placarAwayApos)
       }
       setEventos((prev) => [...prev, item.evento])
-      atualizarFala(item.evento, meuLado, idsMeusJogadoresRef.current)
 
       const delay = calcularDelayProximoEvento(item.evento.tipo, fila.length)
       timeoutFilaRef.current = setTimeout(processarProximoDaFila, delay)
@@ -463,6 +466,14 @@ export default function Partida() {
       disputa_dura: 'Disputa de bola',
       falta: 'Falta marcada',
     }
+    // ★ 07/07/2026 — domínio no momento exato do evento (perspectiva do
+    // meu time, mesma inversão já usada em pctMeuTime pra away). Fica só
+    // como detalhe no card do evento — não sincroniza com a barra de
+    // domínio ao vivo no topo, que continua vindo de dominioAtual.
+    const dominioNoMomento = typeof ev.dominio_no_momento === 'number'
+      ? (lado === 'away' ? 100 - ev.dominio_no_momento : ev.dominio_no_momento)
+      : null
+
     return {
       id: ev.id,
       tipo: ev.tipo,
@@ -472,50 +483,43 @@ export default function Partida() {
       ehMeu,
       placarHomeApos: ev.placar_home_apos,
       placarAwayApos: ev.placar_away_apos,
+      dominioNoMomento,
     }
   }
 
-  function atualizarFala(ev, lado, idsMeus) {
-    const ehMeu = ev.lado ? ev.lado === lado : (ev.elenco_jogador_id ? idsMeus.has(ev.elenco_jogador_id) : null)
-    if (ev.tipo === 'gol' || ev.tipo === 'penalti_marcado') setFala(ehMeu ? 'Que golaço! Vamos manter esse ritmo!' : 'Tranquilo, ainda temos tempo. Foco na próxima jogada.')
-    else if (ev.tipo === 'cartao_vermelho') setFala('Com um a menos, precisamos ajustar o time.')
-    else if (ev.tipo === 'lesao' && ehMeu) setFala('Perdemos um jogador. Hora de pensar na substituição.')
-    else if (ev.tipo === 'penalti_sinalizado' && ehMeu) setFala('Pênalti a nosso favor! Escolha bem quem vai cobrar.')
-    else if (ev.tipo === 'jogada_progressao' && ehMeu) setFala('Estamos chegando lá! Vamos com calma.')
-    else if (ev.tipo === 'jogada_progressao' && !ehMeu) setFala('Atenção na marcação, eles estão perigosos.')
-  }
+  // ★ 07/07/2026 — mesmo padrão de abrirModalLesao: modal abre na hora com
+  // os dados da própria partida, fotos chegam depois via cache do elenco.
+  const abrirModalPenalti = (partida, lado = meuLado) => {
+    const meusJogadores = (lado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
+    const titularesDeLinha = meusJogadores
+      .filter((j) => j.titular !== false && j.posicao !== 'Goalkeeper')
+      .map((j) => ({
+        id: j.id,
+        nome: j.nome,
+        posicao: POSICAO_LABEL[j.posicao] ?? j.posicao,
+        finalizacao: j.finalizacao,
+        foto: null,
+      }))
+      .sort((a, b) => (b.finalizacao ?? 0) - (a.finalizacao ?? 0))
 
-  const abrirModalPenalti = async (partida, lado = meuLado) => {
-    try {
-      const meusJogadores = (lado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
-      const elencoData = await apiFetch('/api/elenco', { method: 'GET' }).catch(() => null)
-      const fotosPorId = new Map()
-      if (elencoData) {
+    setTitularesParaPenalti(titularesDeLinha)
+    interagiuPenaltiRef.current = false
+    tempoTotalPenaltiRef.current = DURACAO_SEM_ACAO
+    tempoRestantePenaltiRef.current = DURACAO_SEM_ACAO
+    setTempoTotalPenalti(DURACAO_SEM_ACAO)
+    setTempoPenalti(DURACAO_SEM_ACAO)
+    setPenaltiAberto(true)
+
+    getElencoAtual()
+      .then((elencoData) => {
+        if (!elencoData) return
+        const fotosPorId = new Map()
         for (const j of [...(elencoData.titulares || []), ...(elencoData.reservas || [])]) {
           fotosPorId.set(j.id, j.foto)
         }
-      }
-      const titularesDeLinha = meusJogadores
-        .filter((j) => j.titular !== false && j.posicao !== 'Goalkeeper')
-        .map((j) => ({
-          id: j.id,
-          nome: j.nome,
-          posicao: POSICAO_LABEL[j.posicao] ?? j.posicao,
-          finalizacao: j.finalizacao,
-          foto: fotosPorId.get(j.id) ?? null,
-        }))
-        .sort((a, b) => (b.finalizacao ?? 0) - (a.finalizacao ?? 0))
-
-      setTitularesParaPenalti(titularesDeLinha)
-      interagiuPenaltiRef.current = false
-      tempoTotalPenaltiRef.current = DURACAO_SEM_ACAO
-      tempoRestantePenaltiRef.current = DURACAO_SEM_ACAO
-      setTempoTotalPenalti(DURACAO_SEM_ACAO)
-      setTempoPenalti(DURACAO_SEM_ACAO)
-      setPenaltiAberto(true)
-    } catch (e) {
-      setErro('Não foi possível carregar os jogadores para o pênalti.')
-    }
+        setTitularesParaPenalti((prev) => prev.map((t) => ({ ...t, foto: fotosPorId.get(t.id) ?? t.foto })))
+      })
+      .catch(() => {})
   }
 
   useEffect(() => {
@@ -548,40 +552,48 @@ export default function Partida() {
     }
   }
 
-  const abrirModalLesao = async (partida, lado = meuLado) => {
-    try {
-      const meusJogadores = (lado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
-      const lesionado = meusJogadores.find((j) => j.aguardandoSubstituicao === true)
-      setJogadorLesionadoNome(lesionado?.nome ?? null)
+  // ★ 07/07/2026 — o modal abre IMEDIATAMENTE com os dados que já estão em
+  // memória (nome/posição/overall vêm de dados_jogadores da própria
+  // partida); só as fotos dependem de rede e chegam depois, atualizando o
+  // estado (o <img> tem fallback de avatar enquanto isso). Antes o modal
+  // inteiro esperava o fetch do elenco — e como o timeout de decisão do
+  // servidor já está correndo desde a pausa, cada segundo de fetch era
+  // tempo de decisão roubado do técnico.
+  const abrirModalLesao = (partida, lado = meuLado) => {
+    const meusJogadores = (lado === 'away' ? partida.dados_jogadores_away : partida.dados_jogadores_home) || []
+    const lesionado = meusJogadores.find((j) => j.aguardandoSubstituicao === true)
+    setJogadorLesionadoNome(lesionado?.nome ?? null)
+    setJogadorLesionadoPosicao(lesionado ? (POSICAO_LABEL[lesionado.posicao] ?? lesionado.posicao) : null)
 
-      const elencoData = await apiFetch('/api/elenco', { method: 'GET' }).catch(() => null)
-      const fotosPorId = new Map()
-      if (elencoData) {
+    const reservasDeLinha = meusJogadores
+      .filter((j) => j.titular === false)
+      .map((j) => ({
+        id: j.id,
+        nome: j.nome,
+        posicao: POSICAO_LABEL[j.posicao] ?? j.posicao,
+        overall: j.overall ?? null,
+        foto: null,
+      }))
+      .sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0))
+
+    setReservasParaLesao(reservasDeLinha)
+    interagiuLesaoRef.current = false
+    tempoTotalLesaoRef.current = DURACAO_SEM_ACAO
+    tempoRestanteLesaoRef.current = DURACAO_SEM_ACAO
+    setTempoTotalLesao(DURACAO_SEM_ACAO)
+    setTempoLesao(DURACAO_SEM_ACAO)
+    setLesaoAberto(true)
+
+    getElencoAtual()
+      .then((elencoData) => {
+        if (!elencoData) return
+        const fotosPorId = new Map()
         for (const j of [...(elencoData.titulares || []), ...(elencoData.reservas || [])]) {
           fotosPorId.set(j.id, j.foto)
         }
-      }
-      const reservasDeLinha = meusJogadores
-        .filter((j) => j.titular === false)
-        .map((j) => ({
-          id: j.id,
-          nome: j.nome,
-          posicao: POSICAO_LABEL[j.posicao] ?? j.posicao,
-          overall: j.overall ?? null,
-          foto: fotosPorId.get(j.id) ?? null,
-        }))
-        .sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0))
-
-      setReservasParaLesao(reservasDeLinha)
-      interagiuLesaoRef.current = false
-      tempoTotalLesaoRef.current = DURACAO_SEM_ACAO
-      tempoRestanteLesaoRef.current = DURACAO_SEM_ACAO
-      setTempoTotalLesao(DURACAO_SEM_ACAO)
-      setTempoLesao(DURACAO_SEM_ACAO)
-      setLesaoAberto(true)
-    } catch (e) {
-      setErro(e.message || 'Não foi possível carregar os jogadores para a substituição.')
-    }
+        setReservasParaLesao((prev) => prev.map((r) => ({ ...r, foto: fotosPorId.get(r.id) ?? r.foto })))
+      })
+      .catch(() => {})
   }
 
   useEffect(() => {
@@ -614,7 +626,6 @@ export default function Partida() {
     }
   }
 
-  const limiteAtingidoNoTempo = false
   const handleSolicitarPausaManual = async () => {
     setPausandoManual(true)
     setErro(null)
@@ -679,9 +690,32 @@ export default function Partida() {
   }
 
   if (carregando) {
+    // Skeleton com a estrutura real da tela (placar em cima, feed embaixo)
+    // em vez de texto solto em tela branca — a espera parece menor porque
+    // a tela já "existe" desde o primeiro frame.
+    const pulso = { animation: 'sm-pulso 1.2s ease-in-out infinite' }
     return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: '13px', fontWeight: '500', color: '#9CA3AF' }}>Carregando partida...</span>
+      <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: "'Inter', sans-serif", background: '#fff', height: '100dvh', display: 'flex', flexDirection: 'column' }}>
+        <style>{'@keyframes sm-pulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }'}</style>
+        <div style={{ background: '#1C1C1C', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ ...pulso, width: '52px', height: '52px', borderRadius: '50%', background: '#3a3a3a' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <div style={{ ...pulso, width: '90px', height: '28px', borderRadius: '8px', background: '#3a3a3a' }} />
+            <div style={{ ...pulso, width: '60px', height: '12px', borderRadius: '6px', background: '#2e2e2e' }} />
+          </div>
+          <div style={{ ...pulso, width: '52px', height: '52px', borderRadius: '50%', background: '#3a3a3a' }} />
+        </div>
+        <div style={{ padding: '10px 16px' }}>
+          <div style={{ ...pulso, width: '100%', height: '10px', borderRadius: '5px', background: '#E5E7EB' }} />
+        </div>
+        <div style={{ padding: '8px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 4px' }}>
+              <div style={{ ...pulso, width: '28px', height: '28px', borderRadius: '50%', background: '#E5E7EB', flexShrink: 0 }} />
+              <div style={{ ...pulso, width: `${72 - i * 8}%`, height: '12px', borderRadius: '6px', background: '#E5E7EB' }} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -851,6 +885,16 @@ export default function Partida() {
                       {ev.descricao || ev.titulo}
                     </span>
                   )}
+                  {ev.dominioNoMomento != null && (
+                    <span style={{
+                      marginLeft: 'auto', flexShrink: 0,
+                      fontSize: '9px', fontWeight: '700', color: '#9CA3AF',
+                      background: '#F3F4F6', borderRadius: '8px', padding: '2px 6px',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      domínio no lance: {Math.round(ev.dominioNoMomento)}%
+                    </span>
+                  )}
                 </div>
               )
             })}
@@ -919,7 +963,7 @@ export default function Partida() {
                 <button key={jogador.id} onClick={() => escolherBatedor(jogador)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #E5E7EB', background: '#fff', cursor: 'pointer', fontFamily: "'Inter', sans-serif", textAlign: 'left' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#1C1C1C', flexShrink: 0, border: '2px solid #F5F5F5' }}>
                     <img
-                      src={jogador.foto ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=40`}
+                      src={fotoMiniatura(jogador.foto) ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=40`}
                       alt={jogador.nome}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=40` }}
@@ -946,7 +990,9 @@ export default function Partida() {
             <div style={{ textAlign: 'center', marginBottom: '6px' }}><img src={iconInjury} alt="lesão" style={{ width: 28, height: 28 }} /></div>
             <div style={{ fontSize: '17px', fontWeight: '900', color: '#1C1C1C', textAlign: 'center', marginBottom: '2px' }}>LESÃO!</div>
             <div style={{ fontSize: '12px', fontWeight: '400', color: '#6B7280', textAlign: 'center', marginBottom: '14px' }}>
-              {jogadorLesionadoNome ? `${jogadorLesionadoNome} saiu machucado — escolha o substituto` : 'Escolha o substituto'}
+              {jogadorLesionadoNome
+                ? `${jogadorLesionadoNome}${jogadorLesionadoPosicao ? ` (${jogadorLesionadoPosicao})` : ''} saiu machucado — escolha o substituto`
+                : 'Escolha o substituto'}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
@@ -961,7 +1007,7 @@ export default function Partida() {
                 <button key={jogador.id} onClick={() => escolherSubstitutoNoPopup(jogador)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #E5E7EB', background: '#fff', cursor: 'pointer', fontFamily: "'Inter', sans-serif", textAlign: 'left' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#1C1C1C', flexShrink: 0, border: '2px solid #F5F5F5' }}>
                     <img
-                      src={jogador.foto ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=40`}
+                      src={fotoMiniatura(jogador.foto) ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=40`}
                       alt={jogador.nome}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=40` }}

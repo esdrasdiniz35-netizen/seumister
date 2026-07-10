@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import { getTecnicoMe } from '../lib/cacheTecnico'
+import { getElencoAtual, invalidateElencoCache } from '../lib/cacheElenco'
+import { fotoMiniatura } from '../lib/fotoJogador'
 
 import iconHomeCinza from '../assets/icons/home_cinza.png'
 import iconHomeLaranja from '../assets/icons/home_laranja.png'
@@ -247,7 +249,7 @@ export default function Elenco() {
       try {
         const [tecnicoData, elencoData] = await Promise.all([
           getTecnicoMe(),
-          apiFetch('/api/elenco', { method: 'GET' }),
+          getElencoAtual(),
         ])
         if (cancelado) return
 
@@ -315,6 +317,7 @@ export default function Elenco() {
         method: 'PUT',
         body: { formacao: novaFormacao, ordemTitulares },
       })
+      invalidateElencoCache()
     } catch (e) {
       setFormacao(formacaoAnterior)
       setTitulares(titularesAnteriores)
@@ -366,6 +369,7 @@ export default function Elenco() {
         method: 'PUT',
         body: { formacao, ordemTitulares },
       })
+      invalidateElencoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível salvar a posição.')
     } finally {
@@ -381,10 +385,11 @@ export default function Elenco() {
         method: 'PUT',
         body: { idTitularSaindo, idReservaEntrando },
       })
+      invalidateElencoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível realizar a substituição.')
       try {
-        const elencoData = await apiFetch('/api/elenco', { method: 'GET' })
+        const elencoData = await getElencoAtual({ force: true })
         const formatarComLabel = (j) => ({ ...j, posicaoLabel: POSICAO_LABEL[j.posicao] ?? j.posicao })
         setTitulares((elencoData.titulares || []).map(formatarComLabel))
         setReservas((elencoData.reservas || []).map(formatarComLabel))
@@ -404,10 +409,11 @@ export default function Elenco() {
         method: 'PUT',
         body: { idReservaEntrando, x, y },
       })
+      invalidateElencoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível promover o jogador a titular.')
       try {
-        const elencoData = await apiFetch('/api/elenco', { method: 'GET' })
+        const elencoData = await getElencoAtual({ force: true })
         const formatarComLabel = (j) => ({ ...j, posicaoLabel: POSICAO_LABEL[j.posicao] ?? j.posicao })
         setTitulares((elencoData.titulares || []).map(formatarComLabel))
         setReservas((elencoData.reservas || []).map(formatarComLabel))
@@ -679,7 +685,7 @@ export default function Elenco() {
                   overflow: 'hidden', background: '#1C1C1C',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
                 }}>
-                  <img src={jogador.foto} alt={jogador.nome}
+                  <img src={fotoMiniatura(jogador.foto)} alt={jogador.nome} loading="lazy"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=38` }}
                   />
@@ -728,7 +734,7 @@ export default function Elenco() {
                 }}
               >
                 <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', background: '#1C1C1C', border: '2px solid #fff' }}>
-                  <img src={jogador.foto} alt={jogador.nome}
+                  <img src={fotoMiniatura(jogador.foto)} alt={jogador.nome} loading="lazy"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=38` }}
                   />

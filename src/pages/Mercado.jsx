@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import { getTecnicoMe, invalidateTecnicoCache } from '../lib/cacheTecnico'
+import { getElencoAtual, invalidateElencoCache } from '../lib/cacheElenco'
+import { fotoMiniatura } from '../lib/fotoJogador'
 import mascote from '../assets/busto_apito.png'
 
 import iconCoin from '../assets/icons/icon-coin.png'
@@ -275,7 +277,7 @@ export default function Mercado() {
     setCarregandoElenco(true)
     setErro(null)
     try {
-      const elencoData = await apiFetch('/api/elenco', { method: 'GET' })
+      const elencoData = await getElencoAtual()
       const todos = [...(elencoData.titulares || []), ...(elencoData.reservas || [])]
       setMeuElenco(todos)
     } catch (e) {
@@ -309,6 +311,7 @@ export default function Mercado() {
       setMoedas(resultado.moedas_restantes)
       setCatalogo((prev) => prev.filter((j) => j.id !== jogador.id))
       invalidateTecnicoCache()
+      invalidateElencoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível comprar este jogador.')
     } finally {
@@ -327,6 +330,7 @@ export default function Mercado() {
       setMoedas(resultado.moedas_atuais)
       setMeuElenco((prev) => prev.filter((j) => j.id !== jogador.id))
       invalidateTecnicoCache()
+      invalidateElencoCache()
     } catch (e) {
       setErro(e.message || 'Não foi possível vender este jogador.')
     } finally {
@@ -533,7 +537,7 @@ export default function Mercado() {
                   width: '64px', height: '64px', borderRadius: '10px',
                   overflow: 'hidden', background: '#F5F5F5', flexShrink: 0,
                 }}>
-                  <img src={jogador.foto_url ?? jogador.foto} alt={jogador.nome}
+                  <img src={fotoMiniatura(jogador.foto_url ?? jogador.foto, 128)} alt={jogador.nome} loading="lazy"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=F5F5F5&color=1C1C1C&bold=true&size=64` }}
                   />

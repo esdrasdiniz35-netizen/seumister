@@ -3,7 +3,8 @@
 // Não é mais uma rota: recebe partidaId/meuLado/meuClube de quem já os tem
 // carregados (Partida.jsx) e só fecha a si mesmo via onVoltar.
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { apiFetch } from '../lib/api'
+import { getElencoAtual } from '../lib/cacheElenco'
+import { fotoMiniatura } from '../lib/fotoJogador'
 import { buscarPartidaAtual } from '../lib/partidaRealtime'
 import {
   retomarPartida,
@@ -99,6 +100,16 @@ function distanciaAjustada(a, b) {
   return Math.sqrt(dx * dx + dy * dy)
 }
 
+// Direção de desempate determinística pro caso dist===0 (dois jogadores
+// exatamente sobrepostos, sem vetor real entre eles pra normalizar).
+// Ângulo áureo por seed: cada seed cai num ângulo bem espalhado dos
+// anteriores, então pares diferentes empurram em direções diferentes em
+// vez de todos pro mesmo lado.
+function direcaoDesempate(seed) {
+  const angulo = ((seed * 137.508) % 360) * (Math.PI / 180)
+  return { dx: Math.cos(angulo), dy: Math.sin(angulo) }
+}
+
 // obstaculosFixos (opcional) são posições reais já configuradas pelo
 // técnico — empurram os jogadores móveis pra longe, mas nunca são
 // movidas elas mesmas.
@@ -111,10 +122,13 @@ function resolverColisoes(jogadores, passadas = 2, obstaculosFixos = []) {
         const b = atual[k]
         if (typeof a.x !== 'number' || typeof b.x !== 'number') continue
         const dist = distanciaAjustada(a, b)
-        if (dist === 0 || dist >= DISTANCIA_MINIMA) continue
+        if (dist >= DISTANCIA_MINIMA) continue
+        // ★ dist===0 é o caso mais grave de sobreposição (dois jogadores
+        // no mesmo ponto exato) — antes o código pulava esse par (`dist
+        // === 0 || ...continue`), então nunca se desfazia. Agora usa uma
+        // direção determinística de desempate em vez de pular.
+        const { dx, dy } = dist === 0 ? direcaoDesempate(i + k) : { dx: (a.x - b.x) / dist, dy: (a.y - b.y) / dist }
         const falta = DISTANCIA_MINIMA - dist
-        const dx = (a.x - b.x) / (dist || 1)
-        const dy = (a.y - b.y) / (dist || 1)
         const empurraX = (dx * falta) / 2
         const empurraY = (dy * falta) / 2
         a.x = Math.min(95, Math.max(5, a.x + empurraX))
@@ -126,10 +140,9 @@ function resolverColisoes(jogadores, passadas = 2, obstaculosFixos = []) {
         const a = atual[i]
         if (typeof a.x !== 'number' || typeof obst.x !== 'number') continue
         const dist = distanciaAjustada(a, obst)
-        if (dist === 0 || dist >= DISTANCIA_MINIMA) continue
+        if (dist >= DISTANCIA_MINIMA) continue
+        const { dx, dy } = dist === 0 ? direcaoDesempate(i) : { dx: (a.x - obst.x) / dist, dy: (a.y - obst.y) / dist }
         const falta = DISTANCIA_MINIMA - dist
-        const dx = (a.x - obst.x) / (dist || 1)
-        const dy = (a.y - obst.y) / (dist || 1)
         a.x = Math.min(95, Math.max(5, a.x + dx * falta))
         a.y = Math.min(95, Math.max(5, a.y + dy * falta))
       }
@@ -185,7 +198,7 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
       try {
         const [partida, elencoData] = await Promise.all([
           buscarPartidaAtual(partidaId),
-          apiFetch('/api/elenco', { method: 'GET' }).catch(() => null),
+          getElencoAtual().catch(() => null),
         ])
 
         if (cancelado) return
@@ -512,14 +525,43 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
   }
 
   if (carregando) {
+    // Skeleton com a estrutura real do popup (header, campo verde, banco)
+    // em vez de "Carregando..." em card branco — o campo já aparece no
+    // primeiro frame, só os jogadores é que "pulsam" até os dados chegarem.
+    const pulso = { animation: 'sm-pulso 1.2s ease-in-out infinite' }
     return (
       <div style={overlayStyle}>
+        <style>{'@keyframes sm-pulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }'}</style>
         <div style={{
-          maxWidth: '420px', width: '100%', fontFamily: "'Inter', sans-serif",
-          background: '#fff', borderRadius: '18px', padding: '32px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          maxWidth: '480px', width: '100%', fontFamily: "'Inter', sans-serif",
+          background: '#fff', borderRadius: '18px', padding: '16px',
+          display: 'flex', flexDirection: 'column', gap: '12px',
         }}>
-          <span style={{ fontSize: '13px', fontWeight: '500', color: '#9CA3AF' }}>Carregando...</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ ...pulso, width: '48px', height: '48px', borderRadius: '50%', background: '#E5E7EB' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ ...pulso, width: '120px', height: '14px', borderRadius: '7px', background: '#E5E7EB' }} />
+              <div style={{ ...pulso, width: '80px', height: '10px', borderRadius: '5px', background: '#F3F4F6' }} />
+            </div>
+          </div>
+          <div style={{
+            position: 'relative', width: '100%', paddingBottom: '78%',
+            background: 'linear-gradient(180deg, #2d8a3e 0%, #3a9e4a 25%, #2d8a3e 50%, #3a9e4a 75%, #2d8a3e 100%)',
+            borderRadius: '12px', border: '2px solid #1a6b2a', overflow: 'hidden',
+          }}>
+            {[[50, 88], [20, 70], [50, 70], [80, 70], [30, 45], [70, 45], [35, 20], [65, 20]].map(([x, y], i) => (
+              <div key={i} style={{
+                ...pulso, position: 'absolute', left: `${x}%`, top: `${y}%`,
+                transform: 'translate(-50%, -50%)', width: '34px', height: '34px',
+                borderRadius: '50%', background: 'rgba(255,255,255,0.35)',
+              }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} style={{ ...pulso, width: '64px', height: '72px', borderRadius: '10px', background: '#F3F4F6' }} />
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -686,8 +728,9 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
                   boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
                 }}>
                   <img
-                    src={jogador.foto ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34`}
+                    src={fotoMiniatura(jogador.foto) ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34`}
                     alt={jogador.nome}
+                    loading="lazy"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34` }}
                   />
@@ -731,8 +774,9 @@ export default function IntervaloPopup({ partidaId, meuLado, meuClube, onVoltar 
                 </div>
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden', background: '#1C1C1C', border: '2px solid #fff' }}>
                   <img
-                    src={jogador.foto ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34`}
+                    src={fotoMiniatura(jogador.foto) ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34`}
                     alt={jogador.nome}
+                    loading="lazy"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1C1C1C&color=fff&bold=true&size=34` }}
                   />

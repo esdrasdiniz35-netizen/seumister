@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import { getTecnicoMe } from '../lib/cacheTecnico'
+import { invalidateElencoCache } from '../lib/cacheElenco'
 import {
   buscarPartidaAtual,
   buscarEventosDaPartida,
@@ -67,6 +68,11 @@ export default function ResultadoPartida() {
 
   useEffect(() => {
     let cancelado = false
+
+    // A partida que acabou mudou o elenco no backend (fadiga, evolução,
+    // lesão) — descarta o cache pra próxima tela que ler /api/elenco já
+    // buscar o estado pós-partida.
+    invalidateElencoCache()
 
     async function carregar() {
       try {
